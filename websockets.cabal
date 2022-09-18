@@ -70,6 +70,7 @@ Library
     Network.WebSockets.Connection
     Network.WebSockets.Extensions
     Network.WebSockets.Stream
+    Network.Wai.Handler.WebSockets
     -- Network.WebSockets.Util.PubSub TODO
 
   Other-modules:
@@ -86,6 +87,7 @@ Library
     Network.WebSockets.Types
 
   Build-depends:
+    SHA               >= 1.5    && < 1.7,
     async             >= 2.2    && < 2.3,
     attoparsec        >= 0.10   && < 0.15,
     base              >= 4.8    && < 5,
@@ -96,12 +98,13 @@ Library
     case-insensitive  >= 0.3    && < 1.3,
     clock             >= 0.8    && < 0.9,
     containers        >= 0.3    && < 0.7,
+    entropy           >= 0.2.1  && < 0.5,
+    http-types,
     network           >= 2.3    && < 3.2,
     random            >= 1.0    && < 1.3,
-    SHA               >= 1.5    && < 1.7,
     streaming-commons >= 0.1    && < 0.3,
     text              >= 0.10   && < 2.1,
-    entropy           >= 0.2.1  && < 0.5
+    wai
 
 Test-suite websockets-tests
   Type:             exitcode-stdio-1.0
