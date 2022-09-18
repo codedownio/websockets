@@ -67,7 +67,7 @@ application pc = do
         putStrLn $ "Clean close (" ++ show i ++ ")"
     handleClose (WS.CloseRequest i msg) =
         putStrLn $ "Clean close (" ++ show i ++ "): " ++ show msg
-    handleClose WS.ConnectionClosed =
+    handleClose (WS.ConnectionClosed _) =
         putStrLn "Unexpected connection closed exception"
     handleClose (WS.ParseException e) =
         putStrLn $ "Recevied parse exception: " ++ show e

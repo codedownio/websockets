@@ -84,7 +84,7 @@ makeStream receive send = do
     assertOpen ref = do
         state <- readIORef ref
         case state of
-            Closed _ -> throwIO ConnectionClosed
+            Closed _ -> throwIO (ConnectionClosed "assertOpen")
             Open   _ -> return ()
 
     receive' :: IORef StreamState -> MVar () -> IO (Maybe B.ByteString)

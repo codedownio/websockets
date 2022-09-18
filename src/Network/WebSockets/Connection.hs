@@ -264,11 +264,9 @@ data Connection = Connection
 
 --------------------------------------------------------------------------------
 receive :: Connection -> IO Message
-receive conn = do
-    mbMsg <- connectionParse conn
-    case mbMsg of
-        Nothing  -> throwIO ConnectionClosed
-        Just msg -> return msg
+receive conn = connectionParse conn >>= \case
+  Nothing  -> throwIO (ConnectionClosed "Got Nothing in receive")
+  Just msg -> return msg
 
 
 --------------------------------------------------------------------------------

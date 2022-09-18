@@ -216,7 +216,7 @@ makePendingConnectionFromStream stream opts = do
     -- TODO: we probably want to send a 40x if the request is bad?
     mbRequest <- Stream.parse stream (decodeRequestHead False)
     case mbRequest of
-        Nothing      -> throwIO ConnectionClosed
+        Nothing      -> throwIO (ConnectionClosed "Got Nothing in makePendingConnectionFromStream")
         Just request -> return PendingConnection
             { pendingOptions  = opts
             , pendingRequest  = request

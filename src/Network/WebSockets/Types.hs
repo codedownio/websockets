@@ -152,7 +152,7 @@ data ConnectionException
     -- receive some data.  This is a violation of the websocket RFC since the
     -- TCP connection should only be closed after sending and receiving close
     -- control messages.
-    | ConnectionClosed
+    | ConnectionClosed String
 
     -- | The client sent garbage, i.e. we could not parse the WebSockets stream.
     | ParseException String
