@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macOS-latest] # , windows-latest
         cabal: ["3.2"]
         ghc:
         # - "8.6.5"
@@ -19,15 +19,6 @@ jobs:
         - "8.10.7"
         - "9.0.2"
         - "9.2.4"
-        exclude:
-        - os: macOS-latest
-          ghc: 8.8.4
-        - os: macOS-latest
-          ghc: 8.6.5
-        - os: windows-latest
-          ghc: 8.8.4
-        - os: windows-latest
-          ghc: 8.6.5
 
     steps:
     - uses: actions/checkout@v2
@@ -57,7 +48,7 @@ jobs:
 
     - name: Test
       run: |
-        cabal run tests -- --print
+        cabal test all
 
   stack:
     name: stack ${{ matrix.stack }} / ${{ matrix.os }} / resolver ${{ matrix.resolver }}
@@ -65,7 +56,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macOS-latest] # , windows-latest
         stack: ["2.7.5"]
         resolver:
         # - lts-9
@@ -105,6 +96,7 @@ jobs:
 
     - name: Build
       run: |
+        ls -lh
         stack build --resolver ${{matrix.resolver}} --test --bench --no-run-tests --no-run-benchmarks
 
     - name: Test
