@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  cabal:
+    name: ${{ matrix.os }} / ghc ${{ matrix.ghc }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        cabal: ["3.2"]
+        ghc:
+        - "8.6.5"
+        - "8.8.4"
+        - "8.10.7"
+        - "9.0.2"
+        - "9.2.4"
+        exclude:
+        - os: macOS-latest
+          ghc: 8.8.4
+        - os: macOS-latest
+          ghc: 8.6.5
+        - os: windows-latest
+          ghc: 8.8.4
+        - os: windows-latest
+          ghc: 8.6.5
+
+    steps:
+    - uses: actions/checkout@v2
+      if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.ref == 'refs/heads/master'
+
+    - uses: haskell/actions/setup@v1
+      id: setup-haskell-cabal
+      name: Setup Haskell (Cabal)
+      with:
+        ghc-version: ${{ matrix.ghc }}
+        cabal-version: ${{ matrix.cabal }}
+
+    - name: Freeze
+      run: |
+        cabal freeze
+
+    - uses: actions/cache@v1
+      name: Cache ~/.cabal/store
+      with:
+        path: ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
+        key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+
+    - name: Build
+      run: |
+        cabal configure --enable-tests --enable-benchmarks --test-show-details=direct
+        cabal build all
+
+    - name: Test
+      run: |
+        cabal run tests -- --print
+
+  stack:
+    name: stack ${{ matrix.stack }} / ${{ matrix.os }} / resolver ${{ matrix.resolver }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        stack: ["2.7.5"]
+        resolver:
+          - lts-9
+          - lts-11
+          - lts-12
+          - lts-13
+          - lts-14
+          - lts-15
+          - lts-16
+          - lts-18
+          - lts-19
+        exclude:
+          # GHC bug on this version causes the build to fail ("Access violation in generated code when writing 0x0")
+          - os: windows-latest
+            resolver: lts-15
+
+    steps:
+    - uses: actions/checkout@v2
+      if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.ref == 'refs/heads/master'
+
+    - uses: haskell/actions/setup@v1
+      name: Setup Haskell (Stack)
+      with:
+        enable-stack: true
+        stack-no-global: true
+        stack-version: ${{ matrix.stack }}
+
+    - name: Run stack setup
+      run: |
+        stack setup --resolver ${{matrix.resolver}}
+
+    - uses: actions/cache@v1
+      name: Cache ~/.stack
+      with:
+        path: ~/.stack
+        key: ${{ runner.os }}-${{ matrix.resolver }}-stack-${{ matrix.stack }}-key1
+
+    - name: Build
+      run: |
+        stack build --resolver ${{matrix.resolver}} --test --bench --no-run-tests --no-run-benchmarks
+
+    - name: Test
+      run: |
+        stack test --resolver ${{matrix.resolver}}
