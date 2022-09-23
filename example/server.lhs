@@ -9,7 +9,6 @@ keep the [reference](/reference/) nearby to check out the functions we use.
 > {-# LANGUAGE OverloadedStrings #-}
 > module Main where
 > import Data.Char (isPunctuation, isSpace)
-> import Data.Monoid (mappend)
 > import Data.Text (Text)
 > import Control.Exception (finally)
 > import Control.Monad (forM_, forever)
