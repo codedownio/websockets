@@ -6,7 +6,7 @@ on:
 
 jobs:
   cabal:
-    name: ${{ matrix.os }} / ghc ${{ matrix.ghc }}
+    name: cabal ${{ matrix.os }} / ghc ${{ matrix.ghc }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -14,8 +14,8 @@ jobs:
         os: [ubuntu-latest, macOS-latest, windows-latest]
         cabal: ["3.2"]
         ghc:
-        - "8.6.5"
-        - "8.8.4"
+        # - "8.6.5"
+        # - "8.8.4"
         - "8.10.7"
         - "9.0.2"
         - "9.2.4"
@@ -40,9 +40,9 @@ jobs:
         ghc-version: ${{ matrix.ghc }}
         cabal-version: ${{ matrix.cabal }}
 
-    - name: Freeze
-      run: |
-        cabal freeze
+    # - name: Freeze
+    #   run: |
+    #     cabal freeze
 
     - uses: actions/cache@v1
       name: Cache ~/.cabal/store
@@ -68,19 +68,19 @@ jobs:
         os: [ubuntu-latest, macOS-latest, windows-latest]
         stack: ["2.7.5"]
         resolver:
-          - lts-9
-          - lts-11
-          - lts-12
-          - lts-13
-          - lts-14
-          - lts-15
-          - lts-16
-          - lts-18
-          - lts-19
-        exclude:
-          # GHC bug on this version causes the build to fail ("Access violation in generated code when writing 0x0")
-          - os: windows-latest
-            resolver: lts-15
+        # - lts-9
+        # - lts-11
+        # - lts-12
+        # - lts-13
+        # - lts-14
+        - lts-15
+        - lts-16
+        - lts-18
+        - lts-19
+        # exclude:
+        # # GHC bug on this version causes the build to fail ("Access violation in generated code when writing 0x0")
+        # - os: windows-latest
+        #   resolver: lts-15
 
     steps:
     - uses: actions/checkout@v2
