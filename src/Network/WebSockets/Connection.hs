@@ -236,8 +236,8 @@ data Connection = Connection {
 
 receive :: Connection -> IO Message
 receive conn = connectionParse conn >>= \case
-  Nothing  -> throwIO (ConnectionClosed "Got Nothing in receive")
-  Just msg -> return msg
+  Left err -> throwIO (ConnectionClosed ("Error in receive: " <> err))
+  Right msg -> return msg
 
 
 -- | Receive an application message. Automatically respond to control messages.

@@ -18,7 +18,7 @@ module Network.WebSockets.Types (
 import Control.Exception
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
-import qualified Data.Text as T
+import Data.Text as T
 import qualified Data.Text.Encoding.Error as TL
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Encoding as TL
@@ -123,28 +123,28 @@ instance WebSocketsData T.Text where
 
 -- | Various exceptions that can occur while receiving or transmitting messages
 data ConnectionException
-    -- | The peer has requested that the connection be closed, and included
-    -- a close code and a reason for closing.  When receiving this exception,
-    -- no more messages can be sent.  Also, the server is responsible for
-    -- closing the TCP connection once this exception is received.
-    --
-    -- See <http://tools.ietf.org/html/rfc6455#section-7.4> for a list of close
-    -- codes.
-    = CloseRequest Word16 BL.ByteString
+  -- | The peer has requested that the connection be closed, and included
+  -- a close code and a reason for closing.  When receiving this exception,
+  -- no more messages can be sent.  Also, the server is responsible for
+  -- closing the TCP connection once this exception is received.
+  --
+  -- See <http://tools.ietf.org/html/rfc6455#section-7.4> for a list of close
+  -- codes.
+  = CloseRequest Word16 BL.ByteString
 
-    -- | The peer unexpectedly closed the connection while we were trying to
-    -- receive some data.  This is a violation of the websocket RFC since the
-    -- TCP connection should only be closed after sending and receiving close
-    -- control messages.
-    | ConnectionClosed String
+  -- | The peer unexpectedly closed the connection while we were trying to
+  -- receive some data.  This is a violation of the websocket RFC since the
+  -- TCP connection should only be closed after sending and receiving close
+  -- control messages.
+  | ConnectionClosed Text
 
-    -- | The client sent garbage, i.e. we could not parse the WebSockets stream.
-    | ParseException String
+  -- | The client sent garbage, i.e. we could not parse the WebSockets stream.
+  | ParseException Text
 
-    -- | The client sent invalid UTF-8.  Note that this exception will only be
-    -- thrown if strict decoding is set in the connection options.
-    | UnicodeException String
-    deriving (Eq, Show, Typeable)
+  -- | The client sent invalid UTF-8.  Note that this exception will only be
+  -- thrown if strict decoding is set in the connection options.
+  | UnicodeException Text
+  deriving (Eq, Show, Typeable)
 
 
 instance Exception ConnectionException
@@ -163,5 +163,5 @@ decodeUtf8Lenient = TL.decodeUtf8With TL.lenientDecode
 -- | Throw an error if there is an invalid input byte.
 decodeUtf8Strict :: BL.ByteString -> Either ConnectionException TL.Text
 decodeUtf8Strict bl = unsafePerformIO $ try $
-    let txt = TL.decodeUtf8With (\err _ -> throw (UnicodeException err)) bl in
-    TL.length txt `seq` return txt
+  let txt = TL.decodeUtf8With (\err _ -> throw (UnicodeException (T.pack err))) bl in
+  TL.length txt `seq` return txt

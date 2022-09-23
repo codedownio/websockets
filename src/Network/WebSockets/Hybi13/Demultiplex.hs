@@ -17,6 +17,7 @@ import Data.ByteString.Builder (Builder)
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as BL
 import Data.Int (Int64)
+import qualified Data.Text as T
 import Data.Typeable (Typeable)
 import Network.WebSockets.Connection.Options
 import Network.WebSockets.Types
@@ -106,7 +107,7 @@ demultiplex _ _ (Frame True False False False CloseFrame pl) =
 demultiplex sizeLimit EmptyDemultiplexState (Frame fin rsv1 rsv2 rsv3 tp pl) = case tp of
     _ | not (atMostSizeLimit size sizeLimit) ->
         ( DemultiplexError $ ParseException $
-            "Message of size " ++ show size ++ " exceeded limit"
+            "Message of size " <> T.pack (show size) <> " exceeded limit"
         , emptyDemultiplexState
         )
 
@@ -130,17 +131,16 @@ demultiplex sizeLimit EmptyDemultiplexState (Frame fin rsv1 rsv2 rsv3 tp pl) = c
     binary x = DataMessage rsv1 rsv2 rsv3 (Binary x)
 
 demultiplex sizeLimit (DemultiplexState size0 b f) (Frame fin False False False ContinuationFrame pl)
-    | not (atMostSizeLimit size1 sizeLimit) =
-        ( DemultiplexError $ ParseException $
-            "Message of size " ++ show size1 ++ " exceeded limit"
-        , emptyDemultiplexState
-        )
-    | fin         = (DemultiplexSuccess (f b'), emptyDemultiplexState)
-    | otherwise   = (DemultiplexContinue, DemultiplexState size1 b' f)
+  | not (atMostSizeLimit size1 sizeLimit) =
+      ( DemultiplexError $ ParseException $
+          "Message of size " <> T.pack (show size1) <> " exceeded limit"
+      , emptyDemultiplexState
+      )
+  | fin         = (DemultiplexSuccess (f b'), emptyDemultiplexState)
+  | otherwise   = (DemultiplexContinue, DemultiplexState size1 b' f)
   where
     size1 = size0 + BL.length pl
     b'    = b `mappend` plb
     plb   = B.lazyByteString pl
 
-demultiplex _ _ _ =
-    (DemultiplexError (CloseRequest 1002 "Protocol Error"), emptyDemultiplexState)
+demultiplex _ _ _ = (DemultiplexError (CloseRequest 1002 "Protocol Error"), emptyDemultiplexState)

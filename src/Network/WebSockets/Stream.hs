@@ -25,6 +25,7 @@ import Network.WebSockets.Types
 
 #if !defined(mingw32_HOST_OS)
 import qualified Network.Socket.ByteString.Lazy as SBL (sendAll)
+import qualified Data.Text as T
 #else
 import qualified Network.Socket.ByteString      as SB (sendAll)
 #endif
@@ -156,7 +157,7 @@ parseBin stream parser = do
             case mbBs of
                 Nothing -> go (f Nothing) True
                 Just bs -> go (f (Just bs)) False
-    go (BIN.Fail _ _ err) _ = throwIO (ParseException err)
+    go (BIN.Fail _ _ err) _ = throwIO (ParseException (T.pack err))
 
 
 parse :: Stream -> Atto.Parser a -> IO (Maybe a)
@@ -188,7 +189,7 @@ parse stream parser = do
             case mbBs of
                 Nothing -> go (f B.empty) True
                 Just bs -> go (f bs) False
-    go (Atto.Fail _ _ err) _ = throwIO (ParseException err)
+    go (Atto.Fail _ _ err) _ = throwIO (ParseException (T.pack err))
 
 
 write :: Stream -> BL.ByteString -> IO ()

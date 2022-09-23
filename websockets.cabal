@@ -62,7 +62,7 @@ Library
   Ghc-options:      -Wall
   C-sources:        cbits/cbits.c
   Default-language: Haskell2010
-  Default-extensions: LambdaCase
+  Default-extensions: LambdaCase OverloadedStrings
 
   Exposed-modules:
     Network.WebSockets

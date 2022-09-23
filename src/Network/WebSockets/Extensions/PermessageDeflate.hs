@@ -21,6 +21,7 @@ import qualified Data.ByteString.Lazy.Internal as BL
 import Data.Int (Int64)
 import Data.Monoid
 import qualified Data.Streaming.Zlib as Zlib
+import qualified Data.Text as T
 import Network.WebSockets.Connection.Options
 import Network.WebSockets.Extensions
 import Network.WebSockets.Extensions.Description
@@ -33,17 +34,16 @@ import Text.Read (readMaybe)
 -- | Convert the parameters to an 'ExtensionDescription' that we can put in a
 -- 'Sec-WebSocket-Extensions' header.
 toExtensionDescription :: PermessageDeflate -> ExtensionDescription
-toExtensionDescription PermessageDeflate {..} = ExtensionDescription
-    { extName   = "permessage-deflate"
-    , extParams =
-         [("server_no_context_takeover", Nothing) | serverNoContextTakeover] ++
-         [("client_no_context_takeover", Nothing) | clientNoContextTakeover] ++
-         [("server_max_window_bits", param serverMaxWindowBits) | serverMaxWindowBits /= 15] ++
-         [("client_max_window_bits", param clientMaxWindowBits) | clientMaxWindowBits /= 15]
-    }
+toExtensionDescription PermessageDeflate {..} = ExtensionDescription {
+  extName   = "permessage-deflate"
+  , extParams =
+       [("server_no_context_takeover", Nothing) | serverNoContextTakeover] ++
+       [("client_no_context_takeover", Nothing) | clientNoContextTakeover] ++
+       [("server_max_window_bits", param serverMaxWindowBits) | serverMaxWindowBits /= 15] ++
+       [("client_max_window_bits", param clientMaxWindowBits) | clientMaxWindowBits /= 15]
+  }
   where
     param = Just . B8.pack . show
-
 
 toHeaders :: PermessageDeflate -> Headers
 toHeaders pmd =
@@ -52,78 +52,55 @@ toHeaders pmd =
       )
     ]
 
-
-negotiateDeflate
-    :: SizeLimit -> Maybe PermessageDeflate -> NegotiateExtension
+negotiateDeflate :: SizeLimit -> Maybe PermessageDeflate -> NegotiateExtension
 negotiateDeflate messageLimit pmd0 exts0 = do
     (headers, pmd1) <- negotiateDeflateOpts exts0 pmd0
-    return Extension
-        { extHeaders = headers
-        , extParse   = \parseRaw -> do
-            inflate <- makeMessageInflater messageLimit pmd1
-            return $ do
-                msg <- parseRaw
-                case msg of
-                    Nothing -> return Nothing
-                    Just m  -> fmap Just (inflate m)
+    return Extension {
+      extHeaders = headers
+      , extParse = \parseRaw -> do
+          inflate <- makeMessageInflater messageLimit pmd1
+          return $ do
+            msg <- parseRaw
+            case msg of
+              Left err -> return $ Left err
+              Right m -> fmap Right (inflate m)
 
-        , extWrite   = \writeRaw -> do
-            deflate <- makeMessageDeflater pmd1
-            return $ \msgs ->
-                mapM deflate msgs >>= writeRaw
-        }
+      , extWrite = \writeRaw -> do
+          deflate <- makeMessageDeflater pmd1
+          return $ (mapM deflate >=> writeRaw)
+      }
   where
-    negotiateDeflateOpts
-        :: ExtensionDescriptions
-        -> Maybe PermessageDeflate
-        -> Either String (Headers, Maybe PermessageDeflate)
-
+    negotiateDeflateOpts :: ExtensionDescriptions -> Maybe PermessageDeflate -> Either String (Headers, Maybe PermessageDeflate)
     negotiateDeflateOpts (ext : _) (Just x)
-        | extName ext == "x-webkit-deflate-frame" = Right
-            ([("Sec-WebSocket-Extensions", "x-webkit-deflate-frame")], Just x)
-
+      | extName ext == "x-webkit-deflate-frame" = Right
+          ([("Sec-WebSocket-Extensions", "x-webkit-deflate-frame")], Just x)
     negotiateDeflateOpts (ext : _) (Just x)
-        | extName ext == "permessage-deflate" = do
-            x' <- foldM setParam x (extParams ext)
-            Right (toHeaders x', Just x')
-
-    negotiateDeflateOpts (_ : exts) (Just x) =
-        negotiateDeflateOpts exts (Just x)
-
+      | extName ext == "permessage-deflate" = do
+          x' <- foldM setParam x (extParams ext)
+          Right (toHeaders x', Just x')
+    negotiateDeflateOpts (_ : exts) (Just x) = negotiateDeflateOpts exts (Just x)
     negotiateDeflateOpts _ _ = Right ([], Nothing)
 
 
-setParam
-    :: PermessageDeflate -> ExtensionParam -> Either String PermessageDeflate
-setParam pmd ("server_no_context_takeover", _) =
-    Right pmd {serverNoContextTakeover = True}
-
-setParam pmd ("client_no_context_takeover", _) =
-    Right pmd {clientNoContextTakeover = True}
-
-setParam pmd ("server_max_window_bits", Nothing) =
-    Right pmd {serverMaxWindowBits = 15}
-
+setParam :: PermessageDeflate -> ExtensionParam -> Either String PermessageDeflate
+setParam pmd ("server_no_context_takeover", _) = Right pmd {serverNoContextTakeover = True}
+setParam pmd ("client_no_context_takeover", _) = Right pmd {clientNoContextTakeover = True}
+setParam pmd ("server_max_window_bits", Nothing) = Right pmd {serverMaxWindowBits = 15}
 setParam pmd ("server_max_window_bits", Just param) = do
-    w <- parseWindow param
-    Right pmd {serverMaxWindowBits = w}
-
-setParam pmd ("client_max_window_bits", Nothing) = do
-    Right pmd {clientMaxWindowBits = 15}
-
+  w <- parseWindow param
+  Right pmd {serverMaxWindowBits = w}
+setParam pmd ("client_max_window_bits", Nothing) = Right pmd {clientMaxWindowBits = 15}
 setParam pmd ("client_max_window_bits", Just param) = do
-    w <- parseWindow param
-    Right pmd {clientMaxWindowBits = w}
-
+  w <- parseWindow param
+  Right pmd {clientMaxWindowBits = w}
 setParam pmd (_, _) = Right pmd
-
 
 parseWindow :: B.ByteString -> Either String Int
 parseWindow bs8 = case readMaybe (B8.unpack bs8) of
-    Just w
-        | w >= 8 && w <= 15 -> Right w
-        | otherwise         -> Left $ "Window out of bounds: " ++ show w
-    Nothing -> Left $ "Can't parse window: " ++ show bs8
+  Just w
+    | w >= 8 && w <= 15 -> Right w
+    | otherwise         -> Left $ "Window out of bounds: " ++ show w
+  Nothing -> Left $ "Can't parse window: " ++ show bs8
 
 
 -- | If the window_bits parameter is set to 8, we must set it to 9 instead.
@@ -142,9 +119,9 @@ parseWindow bs8 = case readMaybe (B8.unpack bs8) of
 -- with this initialization, or at least in that case use 9 with inflateInit2().
 fixWindowBits :: Int -> Int
 fixWindowBits n
-    | n < 9     = 9
-    | n > 15    = 15
-    | otherwise = n
+  | n < 9     = 9
+  | n > 15    = 15
+  | otherwise = n
 
 
 appTailL :: BL.ByteString
@@ -158,39 +135,36 @@ maybeStrip x = x
 
 rejectExtensions :: Message -> IO Message
 rejectExtensions (DataMessage rsv1 rsv2 rsv3 _) | rsv1 || rsv2 || rsv3 =
-    throwIO $ CloseRequest 1002 "Protocol Error"
+  throwIO $ CloseRequest 1002 "Protocol Error"
 rejectExtensions x = return x
 
 
-makeMessageDeflater
-    :: Maybe PermessageDeflate -> IO (Message -> IO Message)
+makeMessageDeflater :: Maybe PermessageDeflate -> IO (Message -> IO Message)
 makeMessageDeflater Nothing = return rejectExtensions
 makeMessageDeflater (Just pmd)
-    | serverNoContextTakeover pmd = do
-        return $ \msg -> do
-            ptr <- initDeflate pmd
-            deflateMessageWith (deflateBody ptr) msg
-    | otherwise = do
-        ptr <- initDeflate pmd
-        return $ \msg ->
-            deflateMessageWith (deflateBody ptr) msg
+  | serverNoContextTakeover pmd = do
+      return $ \msg -> do
+          ptr <- initDeflate pmd
+          deflateMessageWith (deflateBody ptr) msg
+  | otherwise = do
+      ptr <- initDeflate pmd
+      return $ \msg ->
+          deflateMessageWith (deflateBody ptr) msg
   where
     initDeflate :: PermessageDeflate -> IO Zlib.Deflate
     initDeflate PermessageDeflate {..} =
-        Zlib.initDeflate
-            pdCompressionLevel
-            (Zlib.WindowBits (- (fixWindowBits serverMaxWindowBits)))
+      Zlib.initDeflate
+        pdCompressionLevel
+        (Zlib.WindowBits (- (fixWindowBits serverMaxWindowBits)))
 
 
-    deflateMessageWith
-        :: (BL.ByteString -> IO BL.ByteString)
-        -> Message -> IO Message
+    deflateMessageWith :: (BL.ByteString -> IO BL.ByteString) -> Message -> IO Message
     deflateMessageWith deflater (DataMessage False False False (Text x _)) = do
-        x' <- deflater x
-        return (DataMessage True False False (Text x' Nothing))
+      x' <- deflater x
+      return (DataMessage True False False (Text x' Nothing))
     deflateMessageWith deflater (DataMessage False False False (Binary x)) = do
-        x' <- deflater x
-        return (DataMessage True False False (Binary x'))
+      x' <- deflater x
+      return (DataMessage True False False (Binary x'))
     deflateMessageWith _ x = return x
 
 
@@ -203,17 +177,13 @@ makeMessageDeflater (Just pmd)
             chunk <- Zlib.feedDeflate ptr c >>= dePopper
             (chunk <>) <$> go cs
 
-
 dePopper :: Zlib.Popper -> IO BL.ByteString
-dePopper p = p >>= \res -> case res of
-    Zlib.PRDone    -> return BL.empty
-    Zlib.PRNext c  -> BL.chunk c <$> dePopper p
-    Zlib.PRError x -> throwIO $ CloseRequest 1002 (BL8.pack (show x))
+dePopper p = p >>= \case
+  Zlib.PRDone -> return BL.empty
+  Zlib.PRNext c -> BL.chunk c <$> dePopper p
+  Zlib.PRError x -> throwIO $ CloseRequest 1002 (BL8.pack (show x))
 
-
-makeMessageInflater
-    :: SizeLimit -> Maybe PermessageDeflate
-    -> IO (Message -> IO Message)
+makeMessageInflater :: SizeLimit -> Maybe PermessageDeflate -> IO (Message -> IO Message)
 makeMessageInflater _ Nothing = return rejectExtensions
 makeMessageInflater messageLimit (Just pmd)
     | clientNoContextTakeover pmd =
@@ -261,4 +231,4 @@ makeMessageInflater messageLimit (Just pmd)
 
     checkSize :: Int64 -> IO ()
     checkSize size = unless (atMostSizeLimit size messageLimit) $ throwIO $
-        ParseException $ "Message of size " ++ show size ++ " exceeded limit"
+      ParseException $ "Message of size " <> T.pack (show size) <> " exceeded limit"
