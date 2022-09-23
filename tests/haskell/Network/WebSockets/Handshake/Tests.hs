@@ -6,6 +6,7 @@ import Control.Exception hiding (assert)
 import Data.ByteString.Char8 ()
 import Data.IORef
 import Data.Maybe
+import qualified Data.Text as T
 import Network.WebSockets
 import Network.WebSockets.Connection
 import Network.WebSockets.Http
@@ -28,15 +29,15 @@ tests = testGroup "Network.WebSockets.Handshake.Test"
 
 testHandshake :: RequestHead -> (PendingConnection -> IO a) -> IO ResponseHead
 testHandshake rq app = do
-    echo <- Stream.makeEchoStream
-    _    <- forkIO $ do
-        _ <- app (PendingConnection defaultConnectionOptions rq nullify echo)
-        return ()
-    mbRh <- Stream.parse echo decodeResponseHead
-    Stream.close echo
-    case mbRh of
-        Nothing -> fail "testHandshake: No response"
-        Just rh -> return rh
+  echo <- Stream.makeEchoStream
+  _    <- forkIO $ do
+    _ <- app (PendingConnection defaultConnectionOptions rq nullify echo)
+    return ()
+  mbRh <- Stream.parse echo decodeResponseHead
+  Stream.close echo
+  case mbRh of
+    Left err -> fail $ "testHandshake: No response: " <> T.unpack err
+    Right rh -> return rh
   where
     nullify _ = return ()
 
