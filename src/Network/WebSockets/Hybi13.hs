@@ -1,5 +1,4 @@
 {-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE OverloadedStrings #-}
 module Network.WebSockets.Hybi13 (
   headerVersions
   , finishRequest

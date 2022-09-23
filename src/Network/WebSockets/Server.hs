@@ -1,7 +1,6 @@
 -- | This provides a simple stand-alone server for 'WebSockets' applications.
 -- Note that in production you want to use a real webserver such as snap or
 -- warp.
-{-# LANGUAGE OverloadedStrings #-}
 module Network.WebSockets.Server (
   ServerApp
   , runServer

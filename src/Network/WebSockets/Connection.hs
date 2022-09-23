@@ -1,6 +1,5 @@
 -- | This module exposes connection internals and should only be used if you
 -- really know what you are doing.
-{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Avoid lambda" #-}
 module Network.WebSockets.Connection (

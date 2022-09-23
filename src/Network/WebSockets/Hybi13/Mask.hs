@@ -1,30 +1,28 @@
 -- | Masking of fragmes using a simple XOR algorithm
 {-# LANGUAGE BangPatterns             #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
-{-# LANGUAGE OverloadedStrings        #-}
 {-# LANGUAGE ScopedTypeVariables      #-}
-module Network.WebSockets.Hybi13.Mask
-    ( Mask
-    , parseMask
-    , encodeMask
-    , randomMask
 
-    , maskPayload
-    ) where
+module Network.WebSockets.Hybi13.Mask (
+  Mask
+  , parseMask
+  , encodeMask
+  , randomMask
 
+  , maskPayload
+  ) where
 
-import qualified Data.ByteString.Builder       as Builder
+import Data.Binary.Get (Get, getWord32host)
+import qualified Data.ByteString.Builder as Builder
 import qualified Data.ByteString.Builder.Extra as Builder
-import           Data.Binary.Get               (Get, getWord32host)
-import qualified Data.ByteString.Internal      as B
-import qualified Data.ByteString.Lazy          as BL
+import qualified Data.ByteString.Internal as B
+import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Internal as BL
-import           Data.Word                     (Word32, Word8)
-import           Foreign.C.Types               (CChar (..), CInt (..),
-                                                CSize (..))
-import           Foreign.ForeignPtr            (withForeignPtr)
-import           Foreign.Ptr                   (Ptr, plusPtr)
-import           System.Random                 (RandomGen, random)
+import Data.Word
+import Foreign.C.Types
+import Foreign.ForeignPtr (withForeignPtr)
+import Foreign.Ptr (Ptr, plusPtr)
+import System.Random (RandomGen, random)
 
 
 foreign import ccall unsafe "_hs_mask_chunk" c_mask_chunk

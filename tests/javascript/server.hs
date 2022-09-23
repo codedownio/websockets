@@ -1,5 +1,4 @@
 -- | The server part of the tests
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards     #-}
 module Main
     ( main

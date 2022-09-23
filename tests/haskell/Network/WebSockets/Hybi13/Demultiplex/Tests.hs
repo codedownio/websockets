@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 
 module Network.WebSockets.Hybi13.Demultiplex.Tests (tests) where
 

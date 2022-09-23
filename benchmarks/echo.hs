@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 import           Control.Monad      (forever)
 import qualified Network.WebSockets as WS
 

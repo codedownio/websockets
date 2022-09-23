@@ -1,5 +1,4 @@
-{-# language BangPatterns #-}
-{-# language OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
 
 import Criterion
 import Criterion.Main

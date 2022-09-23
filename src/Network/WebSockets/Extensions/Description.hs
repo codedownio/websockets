@@ -1,5 +1,4 @@
 -- | Code for parsing extensions headers.
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 module Network.WebSockets.Extensions.Description (
   ExtensionParam

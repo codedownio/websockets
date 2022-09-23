@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 
 module Network.WebSockets.Extensions.Tests (tests) where
 
