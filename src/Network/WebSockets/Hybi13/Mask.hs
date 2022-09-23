@@ -1,7 +1,6 @@
 -- | Masking of fragmes using a simple XOR algorithm
 {-# LANGUAGE BangPatterns             #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
-{-# LANGUAGE ScopedTypeVariables      #-}
 
 module Network.WebSockets.Hybi13.Mask (
   Mask

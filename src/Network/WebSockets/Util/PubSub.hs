@@ -10,7 +10,7 @@
 --
 -- * Push new updates from the server using the 'publish' call
 --
-{-# LANGUAGE Rank2Types, ScopedTypeVariables #-}
+{-# LANGUAGE Rank2Types #-}
 module Network.WebSockets.Util.PubSub (
   -- PubSub
   -- , newPubSub

@@ -71,6 +71,7 @@ library
   default-extensions:
       LambdaCase
       OverloadedStrings
+      ScopedTypeVariables
   ghc-options: -Wall
   c-sources:
       cbits/cbits.c
@@ -103,6 +104,7 @@ executable websockets-autobahn
   default-extensions:
       LambdaCase
       OverloadedStrings
+      ScopedTypeVariables
   ghc-options: -Wall -threaded -O2 -rtsopts -with-rtsopts=-N
   build-depends:
       SHA >=1.5 && <1.7
@@ -136,6 +138,7 @@ executable websockets-example
   default-extensions:
       LambdaCase
       OverloadedStrings
+      ScopedTypeVariables
   ghc-options: -Wall
   build-depends:
       SHA >=1.5 && <1.7
@@ -169,6 +172,7 @@ executable websockets-website
   default-extensions:
       LambdaCase
       OverloadedStrings
+      ScopedTypeVariables
   ghc-options: -Wall
   build-depends:
       SHA >=1.5 && <1.7
@@ -232,6 +236,7 @@ test-suite websockets-tests
   default-extensions:
       LambdaCase
       OverloadedStrings
+      ScopedTypeVariables
   ghc-options: -Wall
   c-sources:
       cbits/cbits.c
@@ -289,6 +294,7 @@ benchmark bench-mask
   default-extensions:
       LambdaCase
       OverloadedStrings
+      ScopedTypeVariables
   ghc-options: -Wall
   c-sources:
       cbits/cbits.c

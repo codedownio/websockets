@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+
 module Network.WebSockets (
   -- * Incoming connections and handshaking
   PendingConnection

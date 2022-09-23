@@ -1,4 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Network.WebSockets.Server.Tests (tests) where
 
@@ -28,10 +27,8 @@ tests = testGroup "Network.WebSockets.Server.Tests"
     , testCase "ipv6 server"          testIpv6Server
     ]
 
-
 testSimpleServerClient :: Assertion
 testSimpleServerClient = testServerClient "127.0.0.1" $ \conn -> mapM_ (sendTextData conn)
-
 
 -- | This is a bit ugly but it seems CI services don't support ipv6 in 2018.
 skipIpv6Incompatible :: Assertion -> Assertion
@@ -62,8 +59,6 @@ testServerClient host sendMessages = withEchoServer host 42940 "Bye" $ do
         expectCloseException conn "Bye"
         return texts'
 
-
-
 testOnPong :: Assertion
 testOnPong = withEchoServer "127.0.0.1" 42941 "Bye" $ do
     gotPong <- newIORef False
@@ -83,7 +78,6 @@ testOnPong = withEchoServer "127.0.0.1" 42941 "Bye" $ do
         sendCloseCode conn 1000 ("Bye" :: BL.ByteString)
         expectCloseException conn "Bye"
         return $ "A fsh!" == (msg :: Text)
-
 
 sample :: Arbitrary a => IO [a]
 sample = unGen arbitrary <$> newQCGen <*> pure 512
@@ -132,7 +126,6 @@ withEchoServer host port expectedClose action = do
       error "Unexpected parse exception"
     handleClose _ (UnicodeException _) =
       error "Unexpected unicode exception"
-
 
 expectCloseException :: Connection -> BL.ByteString -> IO ()
 expectCloseException conn msg = act `catch` handler
