@@ -16,9 +16,9 @@ module Network.WebSockets.Client
     ) where
 
 
-import qualified Data.ByteString.Builder       as Builder
 import           Control.Exception             (bracket, finally, throwIO)
 import           Control.Monad                 (void)
+import qualified Data.ByteString.Builder       as Builder
 import           Data.IORef                    (newIORef)
 import qualified Data.Text                     as T
 import qualified Data.Text.Encoding            as T
@@ -128,13 +128,10 @@ newClientConnection stream host path opts customHeaders = do
 -- Throws 'OtherHandshakeException' on failure
 checkServerResponse :: Stream -> RequestHead -> IO ()
 checkServerResponse stream request = do
-    mbResponse <- Stream.parse stream decodeResponseHead
-    response   <- case mbResponse of
-        Just response -> return response
-        Nothing       -> throwIO $ OtherHandshakeException $
-            "Network.WebSockets.Client.newClientConnection: no handshake " ++
-            "response from server"
-    void $ either throwIO return $ finishResponse protocol request response
+  response <- Stream.parse stream decodeResponseHead >>= \case
+    Right response -> return response
+    Left err -> throwIO $ OtherHandshakeException $ "Network.WebSockets.Client.newClientConnection: no handshake response from server: " <> err
+  void $ either throwIO return $ finishResponse protocol request response
   where
     protocol = defaultProtocol -- TODO
 

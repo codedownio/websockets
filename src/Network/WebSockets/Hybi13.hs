@@ -43,113 +43,96 @@ import System.Random
 headerVersions :: [ByteString]
 headerVersions = ["13"]
 
-
-finishRequest :: RequestHead
-              -> Headers
-              -> Either HandshakeException Response
+finishRequest :: RequestHead -> Headers -> Either HandshakeException Response
 finishRequest reqHttp headers = do
-    !key <- getRequestHeader reqHttp "Sec-WebSocket-Key"
-    let !hash    = hashKey key
-        !encoded = B64.encode hash
-    return $ response101 (("Sec-WebSocket-Accept", encoded):headers) ""
+  !key <- getRequestHeader reqHttp "Sec-WebSocket-Key"
+  let !hash = hashKey key
+  let !encoded = B64.encode hash
+  return $ response101 (("Sec-WebSocket-Accept", encoded):headers) ""
 
-
-finishResponse :: RequestHead
-               -> ResponseHead
-               -> Either HandshakeException Response
+finishResponse :: RequestHead -> ResponseHead -> Either HandshakeException Response
 finishResponse request response = do
-    -- Response message should be one of
-    --
-    -- - WebSocket Protocol Handshake
-    -- - Switching Protocols
-    --
-    -- But we don't check it for now
-    when (responseCode response /= 101) $ Left $
-        MalformedResponse response "Wrong response status or message."
+  -- Response message should be one of
+  --
+  -- - WebSocket Protocol Handshake
+  -- - Switching Protocols
+  --
+  -- But we don't check it for now
+  when (responseCode response /= 101) $ Left $
+      MalformedResponse response "Wrong response status or message."
 
-    key          <- getRequestHeader  request  "Sec-WebSocket-Key"
-    responseHash <- getResponseHeader response "Sec-WebSocket-Accept"
-    let challengeHash = B64.encode $ hashKey key
-    when (responseHash /= challengeHash) $ Left $
-        MalformedResponse response "Challenge and response hashes do not match."
+  key <- getRequestHeader  request  "Sec-WebSocket-Key"
+  responseHash <- getResponseHeader response "Sec-WebSocket-Accept"
+  let challengeHash = B64.encode $ hashKey key
+  when (responseHash /= challengeHash) $ Left $
+    MalformedResponse response "Challenge and response hashes do not match."
 
-    return $ Response response ""
-
+  return $ Response response ""
 
 encodeMessage :: RandomGen g => ConnectionType -> g -> Message -> (g, B.Builder)
 encodeMessage conType gen msg = (gen', builder)
   where
     mkFrame      = Frame True False False False
     (mask, gen') = case conType of
-        ServerConnection -> (Nothing, gen)
-        ClientConnection -> first Just (randomMask gen)
+      ServerConnection -> (Nothing, gen)
+      ClientConnection -> first Just (randomMask gen)
     builder      = encodeFrame mask $ case msg of
-        (ControlMessage (Close code pl)) -> mkFrame CloseFrame $
-            runPut (putWord16be code) `mappend` pl
-        (ControlMessage (Ping pl))               -> mkFrame PingFrame   pl
-        (ControlMessage (Pong pl))               -> mkFrame PongFrame   pl
-        (DataMessage rsv1 rsv2 rsv3 (Text pl _)) -> Frame True rsv1 rsv2 rsv3 TextFrame   pl
-        (DataMessage rsv1 rsv2 rsv3 (Binary pl)) -> Frame True rsv1 rsv2 rsv3 BinaryFrame pl
+      (ControlMessage (Close code pl)) -> mkFrame CloseFrame $ runPut (putWord16be code) `mappend` pl
+      (ControlMessage (Ping pl)) -> mkFrame PingFrame   pl
+      (ControlMessage (Pong pl)) -> mkFrame PongFrame   pl
+      (DataMessage rsv1 rsv2 rsv3 (Text pl _)) -> Frame True rsv1 rsv2 rsv3 TextFrame   pl
+      (DataMessage rsv1 rsv2 rsv3 (Binary pl)) -> Frame True rsv1 rsv2 rsv3 BinaryFrame pl
 
-
-encodeMessages
-    :: ConnectionType
-    -> Stream
-    -> IO ([Message] -> IO ())
+encodeMessages :: ConnectionType -> Stream -> IO ([Message] -> IO ())
 encodeMessages conType stream = do
-    genRef <- newIORef =<< newStdGen
-    return $ \msgs -> do
-        builders <- forM msgs $ \msg ->
-          atomicModifyIORef' genRef $ \s -> encodeMessage conType s msg
-        Stream.write stream (B.toLazyByteString $ mconcat builders)
-
+  genRef <- newIORef =<< newStdGen
+  return $ \msgs -> do
+    builders <- forM msgs $ \msg ->
+      atomicModifyIORef' genRef $ \s -> encodeMessage conType s msg
+    Stream.write stream (B.toLazyByteString $ mconcat builders)
 
 encodeFrame :: Maybe Mask -> Frame -> B.Builder
 encodeFrame mask f = B.word8 byte0 `mappend`
     B.word8 byte1 `mappend` len `mappend` maskbytes `mappend`
     B.lazyByteString (maskPayload mask payload)
   where
-
     byte0  = fin .|. rsv1 .|. rsv2 .|. rsv3 .|. opcode
     fin    = if frameFin f  then 0x80 else 0x00
     rsv1   = if frameRsv1 f then 0x40 else 0x00
     rsv2   = if frameRsv2 f then 0x20 else 0x00
     rsv3   = if frameRsv3 f then 0x10 else 0x00
     payload = case frameType f of
-        ContinuationFrame -> framePayload f
-        TextFrame         -> framePayload f
-        BinaryFrame       -> framePayload f
-        CloseFrame        -> BL.take 125 $ framePayload f
-        PingFrame         -> BL.take 125 $ framePayload f
-        PongFrame         -> BL.take 125 $ framePayload f
+      ContinuationFrame -> framePayload f
+      TextFrame         -> framePayload f
+      BinaryFrame       -> framePayload f
+      CloseFrame        -> BL.take 125 $ framePayload f
+      PingFrame         -> BL.take 125 $ framePayload f
+      PongFrame         -> BL.take 125 $ framePayload f
     opcode = case frameType f of
-        ContinuationFrame -> 0x00
-        TextFrame         -> 0x01
-        BinaryFrame       -> 0x02
-        CloseFrame        -> 0x08
-        PingFrame         -> 0x09
-        PongFrame         -> 0x0a
+      ContinuationFrame -> 0x00
+      TextFrame         -> 0x01
+      BinaryFrame       -> 0x02
+      CloseFrame        -> 0x08
+      PingFrame         -> 0x09
+      PongFrame         -> 0x0a
     (maskflag, maskbytes) = case mask of
-        Nothing -> (0x00, mempty)
-        Just m  -> (0x80, encodeMask m)
+      Nothing -> (0x00, mempty)
+      Just m  -> (0x80, encodeMask m)
 
     byte1 = maskflag .|. lenflag
     len'  = BL.length payload
     (lenflag, len)
-        | len' < 126     = (fromIntegral len', mempty)
-        | len' < 0x10000 = (126, B.word16BE (fromIntegral len'))
-        | otherwise      = (127, B.word64BE (fromIntegral len'))
-
+      | len' < 126     = (fromIntegral len', mempty)
+      | len' < 0x10000 = (126, B.word16BE (fromIntegral len'))
+      | otherwise      = (127, B.word64BE (fromIntegral len'))
 
 decodeMessages :: SizeLimit -> SizeLimit -> Stream -> IO (IO (Either Text Message))
 decodeMessages frameLimit messageLimit stream = go <$> newIORef emptyDemultiplexState
   where
     go dmRef = Stream.parseBin stream (parseFrame frameLimit) >>= \case
-      Nothing -> return $ Left "Got empty frame."
-      Just frame -> do
-        demultiplexResult <- atomicModifyIORef' dmRef $
-            \s -> swap $ demultiplex messageLimit s frame
-        case demultiplexResult of
+      Left err -> return $ Left ("Got empty frame: " <> err)
+      Right frame -> do
+        atomicModifyIORef' dmRef (\s -> swap $ demultiplex messageLimit s frame) >>= \case
           DemultiplexError err -> throwIO err
           DemultiplexContinue -> go dmRef
           DemultiplexSuccess msg -> return $ Right msg
@@ -169,22 +152,22 @@ parseFrame frameSizeLimit = do
   let lenflag = byte1 .&. 0x7f
 
   len <- case lenflag of
-      126 -> fromIntegral <$> getWord16be
-      127 -> getInt64be
-      _   -> return (fromIntegral lenflag)
+    126 -> fromIntegral <$> getWord16be
+    127 -> getInt64be
+    _   -> return (fromIntegral lenflag)
 
   -- Check size against limit.
   unless (atMostSizeLimit len frameSizeLimit) $
       fail $ "Frame of size " ++ show len ++ " exceeded limit"
 
   ft <- case opcode of
-      0x00 -> return ContinuationFrame
-      0x01 -> return TextFrame
-      0x02 -> return BinaryFrame
-      0x08 -> enforceControlFrameRestrictions len fin >> return CloseFrame
-      0x09 -> enforceControlFrameRestrictions len fin >> return PingFrame
-      0x0a -> enforceControlFrameRestrictions len fin >> return PongFrame
-      _    -> fail $ "Unknown opcode: " ++ show opcode
+    0x00 -> return ContinuationFrame
+    0x01 -> return TextFrame
+    0x02 -> return BinaryFrame
+    0x08 -> enforceControlFrameRestrictions len fin >> return CloseFrame
+    0x09 -> enforceControlFrameRestrictions len fin >> return PingFrame
+    0x0a -> enforceControlFrameRestrictions len fin >> return PongFrame
+    _    -> fail $ "Unknown opcode: " ++ show opcode
 
   masker <- maskPayload <$> if mask then Just <$> parseMask else pure Nothing
 
@@ -204,7 +187,6 @@ hashKey key = unlazy $ bytestringDigest $ sha1 $ lazy $ key `mappend` guid
     guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
     lazy = BL.fromChunks . return
     unlazy = mconcat . BL.toChunks
-
 
 createRequest :: ByteString -> ByteString -> Bool -> Headers -> IO RequestHead
 createRequest hostname path secure customHeaders = do

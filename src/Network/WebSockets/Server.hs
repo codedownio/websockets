@@ -196,16 +196,15 @@ makePendingConnection socket opts = do
 makePendingConnectionFromStream
     :: Stream.Stream -> ConnectionOptions -> IO PendingConnection
 makePendingConnectionFromStream stream opts = do
-    -- TODO: we probably want to send a 40x if the request is bad?
-    mbRequest <- Stream.parse stream (decodeRequestHead False)
-    case mbRequest of
-        Nothing      -> throwIO (ConnectionClosed "Got Nothing in makePendingConnectionFromStream")
-        Just request -> return PendingConnection
-            { pendingOptions  = opts
-            , pendingRequest  = request
-            , pendingOnAccept = \_ -> return ()
-            , pendingStream   = stream
-            }
+  -- TODO: we probably want to send a 40x if the request is bad?
+  Stream.parse stream (decodeRequestHead False) >>= \case
+    Left err -> throwIO $ ConnectionClosed ("Got Nothing in makePendingConnectionFromStream: " <> err)
+    Right request -> return $ PendingConnection {
+      pendingOptions  = opts
+      , pendingRequest  = request
+      , pendingOnAccept = \_ -> return ()
+      , pendingStream   = stream
+      }
 
 
 -- | Internally used exception type used to kill connections if there
