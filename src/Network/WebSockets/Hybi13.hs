@@ -143,64 +143,61 @@ encodeFrame mask f = B.word8 byte0 `mappend`
 
 
 decodeMessages :: SizeLimit -> SizeLimit -> Stream -> IO (IO (Either Text Message))
-decodeMessages frameLimit messageLimit stream = do
-    dmRef <- newIORef emptyDemultiplexState
-    return $ go dmRef
+decodeMessages frameLimit messageLimit stream = go <$> newIORef emptyDemultiplexState
   where
     go dmRef = Stream.parseBin stream (parseFrame frameLimit) >>= \case
-      Nothing    -> return (Left "Got empty frame.")
+      Nothing -> return $ Left "Got empty frame."
       Just frame -> do
-          demultiplexResult <- atomicModifyIORef' dmRef $
-              \s -> swap $ demultiplex messageLimit s frame
-          case demultiplexResult of
-              DemultiplexError err    -> throwIO err
-              DemultiplexContinue     -> go dmRef
-              DemultiplexSuccess  msg -> return $ Right msg
-
+        demultiplexResult <- atomicModifyIORef' dmRef $
+            \s -> swap $ demultiplex messageLimit s frame
+        case demultiplexResult of
+          DemultiplexError err -> throwIO err
+          DemultiplexContinue -> go dmRef
+          DemultiplexSuccess msg -> return $ Right msg
 
 -- | Parse a frame
 parseFrame :: SizeLimit -> Get Frame
 parseFrame frameSizeLimit = do
-    byte0 <- getWord8
-    let fin    = byte0 .&. 0x80 == 0x80
-        rsv1   = byte0 .&. 0x40 == 0x40
-        rsv2   = byte0 .&. 0x20 == 0x20
-        rsv3   = byte0 .&. 0x10 == 0x10
-        opcode = byte0 .&. 0x0f
+  byte0 <- getWord8
+  let fin    = byte0 .&. 0x80 == 0x80
+  let rsv1   = byte0 .&. 0x40 == 0x40
+  let rsv2   = byte0 .&. 0x20 == 0x20
+  let rsv3   = byte0 .&. 0x10 == 0x10
+  let opcode = byte0 .&. 0x0f
 
-    byte1 <- getWord8
-    let mask = byte1 .&. 0x80 == 0x80
-        lenflag = byte1 .&. 0x7f
+  byte1 <- getWord8
+  let mask = byte1 .&. 0x80 == 0x80
+  let lenflag = byte1 .&. 0x7f
 
-    len <- case lenflag of
-        126 -> fromIntegral <$> getWord16be
-        127 -> getInt64be
-        _   -> return (fromIntegral lenflag)
+  len <- case lenflag of
+      126 -> fromIntegral <$> getWord16be
+      127 -> getInt64be
+      _   -> return (fromIntegral lenflag)
 
-    -- Check size against limit.
-    unless (atMostSizeLimit len frameSizeLimit) $
-        fail $ "Frame of size " ++ show len ++ " exceeded limit"
+  -- Check size against limit.
+  unless (atMostSizeLimit len frameSizeLimit) $
+      fail $ "Frame of size " ++ show len ++ " exceeded limit"
 
-    ft <- case opcode of
-        0x00 -> return ContinuationFrame
-        0x01 -> return TextFrame
-        0x02 -> return BinaryFrame
-        0x08 -> enforceControlFrameRestrictions len fin >> return CloseFrame
-        0x09 -> enforceControlFrameRestrictions len fin >> return PingFrame
-        0x0a -> enforceControlFrameRestrictions len fin >> return PongFrame
-        _    -> fail $ "Unknown opcode: " ++ show opcode
+  ft <- case opcode of
+      0x00 -> return ContinuationFrame
+      0x01 -> return TextFrame
+      0x02 -> return BinaryFrame
+      0x08 -> enforceControlFrameRestrictions len fin >> return CloseFrame
+      0x09 -> enforceControlFrameRestrictions len fin >> return PingFrame
+      0x0a -> enforceControlFrameRestrictions len fin >> return PongFrame
+      _    -> fail $ "Unknown opcode: " ++ show opcode
 
-    masker <- maskPayload <$> if mask then Just <$> parseMask else pure Nothing
+  masker <- maskPayload <$> if mask then Just <$> parseMask else pure Nothing
 
-    chunks <- getLazyByteString len
+  chunks <- getLazyByteString len
 
-    return $ Frame fin rsv1 rsv2 rsv3 ft (masker chunks)
+  return $ Frame fin rsv1 rsv2 rsv3 ft (masker chunks)
 
-    where
-        enforceControlFrameRestrictions len fin
-          | not fin   = fail "Control Frames must not be fragmented!"
-          | len > 125 = fail "Control Frames must not carry payload > 125 bytes!"
-          | otherwise = pure ()
+  where
+    enforceControlFrameRestrictions len fin
+      | not fin   = fail "Control Frames must not be fragmented!"
+      | len > 125 = fail "Control Frames must not carry payload > 125 bytes!"
+      | otherwise = pure ()
 
 hashKey :: ByteString -> ByteString
 hashKey key = unlazy $ bytestringDigest $ sha1 $ lazy $ key `mappend` guid
@@ -210,14 +207,10 @@ hashKey key = unlazy $ bytestringDigest $ sha1 $ lazy $ key `mappend` guid
     unlazy = mconcat . BL.toChunks
 
 
-createRequest :: ByteString
-              -> ByteString
-              -> Bool
-              -> Headers
-              -> IO RequestHead
+createRequest :: ByteString -> ByteString -> Bool -> Headers -> IO RequestHead
 createRequest hostname path secure customHeaders = do
-    key <- B64.encode `liftM`  getEntropy 16
-    return $ RequestHead path (headers key ++ customHeaders) secure
+  key <- B64.encode `fmap`  getEntropy 16
+  return $ RequestHead path (headers key ++ customHeaders) secure
   where
     headers key =
         [ ("Host"                   , hostname     )
