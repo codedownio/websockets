@@ -1,35 +1,34 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TupleSections     #-}
-module Network.WebSockets.Extensions.PermessageDeflate
-    ( defaultPermessageDeflate
-    , PermessageDeflate(..)
-    , negotiateDeflate
+module Network.WebSockets.Extensions.PermessageDeflate (
+  defaultPermessageDeflate
+  , PermessageDeflate(..)
+  , negotiateDeflate
 
-      -- * Considered internal
-    , makeMessageInflater
-    , makeMessageDeflater
-    ) where
+    -- * Considered internal
+  , makeMessageInflater
+  , makeMessageDeflater
+  ) where
 
 
-import           Control.Applicative                       ((<$>))
-import           Control.Exception                         (throwIO)
-import           Control.Monad                             (foldM, unless)
-import qualified Data.ByteString                           as B
-import qualified Data.ByteString.Char8                     as B8
-import qualified Data.ByteString.Lazy                      as BL
-import qualified Data.ByteString.Lazy.Char8                as BL8
-import qualified Data.ByteString.Lazy.Internal             as BL
-import           Data.Int                                  (Int64)
-import           Data.Monoid
-import qualified Data.Streaming.Zlib                       as Zlib
-import           Network.WebSockets.Connection.Options
-import           Network.WebSockets.Extensions
-import           Network.WebSockets.Extensions.Description
-import           Network.WebSockets.Http
-import           Network.WebSockets.Types
-import           Prelude
-import           Text.Read                                 (readMaybe)
+import Control.Exception
+import Control.Monad
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as B8
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Lazy.Char8 as BL8
+import qualified Data.ByteString.Lazy.Internal as BL
+import Data.Int (Int64)
+import Data.Monoid
+import qualified Data.Streaming.Zlib as Zlib
+import Network.WebSockets.Connection.Options
+import Network.WebSockets.Extensions
+import Network.WebSockets.Extensions.Description
+import Network.WebSockets.Http
+import Network.WebSockets.Types
+import Prelude
+import Text.Read (readMaybe)
 
 
 -- | Convert the parameters to an 'ExtensionDescription' that we can put in a

@@ -1,48 +1,45 @@
 -- | Module dealing with HTTP: request data types, encoding and decoding...
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
-module Network.WebSockets.Http
-    ( Headers
-    , RequestHead (..)
-    , Request (..)
-    , ResponseHead (..)
-    , Response (..)
-    , HandshakeException (..)
+module Network.WebSockets.Http (
+  Headers
+  , RequestHead (..)
+  , Request (..)
+  , ResponseHead (..)
+  , Response (..)
+  , HandshakeException (..)
 
-    , encodeRequestHead
-    , encodeRequest
-    , decodeRequestHead
+  , encodeRequestHead
+  , encodeRequest
+  , decodeRequestHead
 
-    , encodeResponseHead
-    , encodeResponse
-    , decodeResponseHead
-    , decodeResponse
+  , encodeResponseHead
+  , encodeResponse
+  , decodeResponseHead
+  , decodeResponse
 
-    , response101
-    , response400
+  , response101
+  , response400
 
-    , getRequestHeader
-    , getResponseHeader
-    , getRequestSecWebSocketVersion
-    , getRequestSubprotocols
-    , getRequestSecWebSocketExtensions
-    ) where
+  , getRequestHeader
+  , getResponseHeader
+  , getRequestSecWebSocketVersion
+  , getRequestSubprotocols
+  , getRequestSecWebSocketExtensions
+  ) where
 
 
-import qualified Data.ByteString.Builder                   as Builder
-import qualified Data.ByteString.Builder.Extra             as Builder
-import           Control.Applicative                       (pure, (*>), (<$>),
-                                                            (<*), (<*>))
-import           Control.Exception                         (Exception)
-import qualified Data.Attoparsec.ByteString                as A
-import           Data.ByteString                           (ByteString)
-import qualified Data.ByteString                           as B
-import           Data.ByteString.Char8                     ()
-import qualified Data.ByteString.Char8                     as BC
-import           Data.ByteString.Internal                  (c2w)
-import qualified Data.CaseInsensitive                      as CI
-import           Data.Dynamic                              (Typeable)
-import           Data.Monoid                               (mappend, mconcat)
+import Control.Exception
+import qualified Data.Attoparsec.ByteString as A
+import Data.ByteString (ByteString)
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Builder as Builder
+import qualified Data.ByteString.Builder.Extra as Builder
+import Data.ByteString.Char8 ()
+import qualified Data.ByteString.Char8 as BC
+import Data.ByteString.Internal (c2w)
+import qualified Data.CaseInsensitive as CI
+import Data.Dynamic (Typeable)
 import qualified Network.WebSockets.Extensions.Description as Extensions
 
 

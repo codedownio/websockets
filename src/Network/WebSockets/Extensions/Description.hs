@@ -1,21 +1,19 @@
 -- | Code for parsing extensions headers.
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Network.WebSockets.Extensions.Description
-    ( ExtensionParam
-    , ExtensionDescription (..)
-    , ExtensionDescriptions
+module Network.WebSockets.Extensions.Description (
+  ExtensionParam
+  , ExtensionDescription (..)
+  , ExtensionDescriptions
 
-    , parseExtensionDescriptions
-    , encodeExtensionDescriptions
-    ) where
+  , parseExtensionDescriptions
+  , encodeExtensionDescriptions
+  ) where
 
-import           Control.Applicative              ((*>), (<*))
-import qualified Data.Attoparsec.ByteString       as A
+import qualified Data.Attoparsec.ByteString as A
 import qualified Data.Attoparsec.ByteString.Char8 as AC8
-import qualified Data.ByteString                  as B
-import           Data.Monoid                      (mconcat, mappend)
-import           Prelude
+import qualified Data.ByteString as B
+import Prelude
 
 type ExtensionParam = (B.ByteString, Maybe B.ByteString)
 

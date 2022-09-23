@@ -1,15 +1,16 @@
-module Network.WebSockets.Extensions
-    ( ExtensionDescription (..)
-    , ExtensionDescriptions
-    , parseExtensionDescriptions
 
-    , NegotiateExtension
-    , Extension (..)
-    ) where
+module Network.WebSockets.Extensions (
+  ExtensionDescription (..)
+  , ExtensionDescriptions
+  , parseExtensionDescriptions
 
-import           Network.WebSockets.Extensions.Description
-import           Network.WebSockets.Http
-import           Network.WebSockets.Types
+  , NegotiateExtension
+  , Extension (..)
+  ) where
+
+import Network.WebSockets.Extensions.Description
+import Network.WebSockets.Http
+import Network.WebSockets.Types
 
 type NegotiateExtension = ExtensionDescriptions -> Either String Extension
 
@@ -17,8 +18,8 @@ type NegotiateExtension = ExtensionDescriptions -> Either String Extension
 -- parse/write functions of 'Connection'.
 --
 -- This type is very likely to change as other extensions are introduced.
-data Extension = Extension
-    { extHeaders :: Headers
-    , extParse   :: IO (Maybe Message) -> IO (IO (Maybe Message))
-    , extWrite   :: ([Message] -> IO ()) -> IO ([Message] -> IO ())
-    }
+data Extension = Extension {
+  extHeaders :: Headers
+  , extParse   :: IO (Maybe Message) -> IO (IO (Maybe Message))
+  , extWrite   :: ([Message] -> IO ()) -> IO ([Message] -> IO ())
+  }

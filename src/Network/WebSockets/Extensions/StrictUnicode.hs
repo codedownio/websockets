@@ -1,20 +1,20 @@
-module Network.WebSockets.Extensions.StrictUnicode
-    ( strictUnicode
-    ) where
 
+module Network.WebSockets.Extensions.StrictUnicode (
+  strictUnicode
+  ) where
 
-import           Control.Exception             (throwIO)
-import qualified Data.ByteString.Lazy          as BL
-import           Network.WebSockets.Extensions
-import           Network.WebSockets.Types
+import Control.Exception
+import qualified Data.ByteString.Lazy as BL
+import Network.WebSockets.Extensions
+import Network.WebSockets.Types
 
 
 strictUnicode :: Extension
-strictUnicode = Extension
-    { extHeaders = []
-    , extParse   = \parseRaw -> return (parseRaw >>= strictParse)
-    , extWrite   = return
-    }
+strictUnicode = Extension {
+  extHeaders = []
+  , extParse   = \parseRaw -> return (parseRaw >>= strictParse)
+  , extWrite   = return
+  }
 
 
 strictParse :: Maybe Message -> IO (Maybe Message)

@@ -2,38 +2,34 @@
 -- Note that in production you want to use a real webserver such as snap or
 -- warp.
 {-# LANGUAGE OverloadedStrings #-}
-module Network.WebSockets.Server
-    ( ServerApp
-    , runServer
-    , ServerOptions (..)
-    , defaultServerOptions
-    , runServerWithOptions
-    , runServerWith
-    , makeListenSocket
-    , makePendingConnection
-    , makePendingConnectionFromStream
+module Network.WebSockets.Server (
+  ServerApp
+  , runServer
+  , ServerOptions (..)
+  , defaultServerOptions
+  , runServerWithOptions
+  , runServerWith
+  , makeListenSocket
+  , makePendingConnection
+  , makePendingConnectionFromStream
 
-    , PongTimeout
-    ) where
-
-
-import           Control.Concurrent            (threadDelay)
-import qualified Control.Concurrent.Async      as Async
-import           Control.Exception             (Exception, allowInterrupt,
-                                                bracket, bracketOnError,
-                                                finally, mask_, throwIO)
-import           Control.Monad                 (forever, void, when)
-import qualified Data.IORef                    as IORef
-import           Data.Maybe                    (isJust)
-import           Network.Socket                (Socket)
-import qualified Network.Socket                as S
-import qualified System.Clock                  as Clock
+  , PongTimeout
+  ) where
 
 
-import           Network.WebSockets.Connection
-import           Network.WebSockets.Http
-import qualified Network.WebSockets.Stream     as Stream
-import           Network.WebSockets.Types
+import Control.Concurrent
+import qualified Control.Concurrent.Async as Async
+import Control.Exception
+import Control.Monad
+import qualified Data.IORef as IORef
+import Data.Maybe (isJust)
+import Network.Socket (Socket)
+import qualified Network.Socket as S
+import Network.WebSockets.Connection
+import Network.WebSockets.Http
+import qualified Network.WebSockets.Stream as Stream
+import Network.WebSockets.Types
+import qualified System.Clock as Clock
 
 
 -- | WebSockets application that can be ran by a server. Once this 'IO' action
@@ -61,7 +57,7 @@ runServer :: String     -- ^ Address to bind
           -> Int        -- ^ Port to listen on
           -> ServerApp  -- ^ Application
           -> IO ()      -- ^ Never returns
-runServer host port app = runServerWith host port defaultConnectionOptions app
+runServer host port = runServerWith host port defaultConnectionOptions
 
 
 -- | A version of 'runServer' which allows you to customize some options.
@@ -74,24 +70,24 @@ runServerWith host port opts = runServerWithOptions defaultServerOptions
 {-# DEPRECATED runServerWith "Use 'runServerWithOptions' instead" #-}
 
 
-data ServerOptions = ServerOptions
-    { serverHost              :: String
-    , serverPort              :: Int
-    , serverConnectionOptions :: ConnectionOptions
-    -- | Require a pong from the client every N seconds; otherwise kill the
-    -- connection.  If you use this, you should also use 'withPingThread' to
-    -- send a ping at a smaller interval; for example N/2.
-    , serverRequirePong       :: Maybe Int
-    }
+data ServerOptions = ServerOptions {
+  serverHost              :: String
+  , serverPort              :: Int
+  , serverConnectionOptions :: ConnectionOptions
+  -- | Require a pong from the client every N seconds; otherwise kill the
+  -- connection.  If you use this, you should also use 'withPingThread' to
+  -- send a ping at a smaller interval; for example N/2.
+  , serverRequirePong       :: Maybe Int
+  }
 
 
 defaultServerOptions :: ServerOptions
-defaultServerOptions = ServerOptions
-    { serverHost              = "127.0.0.1"
-    , serverPort              = 8080
-    , serverConnectionOptions = defaultConnectionOptions
-    , serverRequirePong       = Nothing
-    }
+defaultServerOptions = ServerOptions {
+  serverHost              = "127.0.0.1"
+  , serverPort              = 8080
+  , serverConnectionOptions = defaultConnectionOptions
+  , serverRequirePong       = Nothing
+  }
 
 
 -- | Customizable version of 'runServer'.  Never returns until killed.

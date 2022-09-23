@@ -1,35 +1,31 @@
 -- | Primary types
 {-# LANGUAGE DeriveDataTypeable #-}
-module Network.WebSockets.Types
-    ( Message (..)
-    , ControlMessage (..)
-    , DataMessage (..)
-    , WebSocketsData (..)
+module Network.WebSockets.Types (
+  Message (..)
+  , ControlMessage (..)
+  , DataMessage (..)
+  , WebSocketsData (..)
 
-    , HandshakeException (..)
-    , ConnectionException (..)
+  , HandshakeException (..)
+  , ConnectionException (..)
 
-    , ConnectionType (..)
+  , ConnectionType (..)
 
-    , decodeUtf8Lenient
-    , decodeUtf8Strict
-    ) where
+  , decodeUtf8Lenient
+  , decodeUtf8Strict
+  ) where
 
-
-import           Control.Exception        (Exception (..))
-import           Control.Exception        (throw, try)
-import qualified Data.ByteString          as B
-import qualified Data.ByteString.Lazy     as BL
-import qualified Data.Text                as T
+import Control.Exception
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.Text as T
 import qualified Data.Text.Encoding.Error as TL
-import qualified Data.Text.Lazy           as TL
-import qualified Data.Text.Lazy.Encoding  as TL
-import           Data.Typeable            (Typeable)
-import           Data.Word                (Word16)
-import           System.IO.Unsafe         (unsafePerformIO)
-
-
-import           Network.WebSockets.Http
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Encoding as TL
+import Data.Typeable (Typeable)
+import Data.Word (Word16)
+import Network.WebSockets.Http
+import System.IO.Unsafe
 
 
 -- | The kind of message a server application typically deals with

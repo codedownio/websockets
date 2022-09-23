@@ -1,20 +1,19 @@
 {-# LANGUAGE CPP #-}
-module Network.WebSockets.Connection.Options
-    ( ConnectionOptions (..)
-    , defaultConnectionOptions
+module Network.WebSockets.Connection.Options (
+  ConnectionOptions (..)
+  , defaultConnectionOptions
 
-    , CompressionOptions (..)
-    , PermessageDeflate (..)
-    , defaultPermessageDeflate
+  , CompressionOptions (..)
+  , PermessageDeflate (..)
+  , defaultPermessageDeflate
 
-    , SizeLimit (..)
-    , atMostSizeLimit
-    ) where
+  , SizeLimit (..)
+  , atMostSizeLimit
+  ) where
 
 
-import           Data.Int    (Int64)
-import           Data.Monoid (Monoid (..))
-import           Prelude
+import Data.Int (Int64)
+import Prelude
 
 
 -- | Set options for a 'Connection'.  Please do not use this constructor
@@ -24,30 +23,30 @@ import           Prelude
 -- > myOptions = defaultConnectionOptions {connectionStrictUnicode = True}
 --
 -- This way your code does not break if the library introduces new fields.
-data ConnectionOptions = ConnectionOptions
-    { connectionOnPong                :: !(IO ())
-      -- ^ Whenever a 'pong' is received, this IO action is executed. It can be
-      -- used to tickle connections or fire missiles.
-    , connectionCompressionOptions    :: !CompressionOptions
-      -- ^ Enable 'PermessageDeflate'.
-    , connectionStrictUnicode         :: !Bool
-      -- ^ Enable strict unicode on the connection.  This means that if a client
-      -- (or server) sends invalid UTF-8, we will throw a 'UnicodeException'
-      -- rather than replacing it by the unicode replacement character U+FFFD.
-    , connectionFramePayloadSizeLimit :: !SizeLimit
-      -- ^ The maximum size for incoming frame payload size in bytes.  If a
-      -- frame exceeds this limit, a 'ParseException' is thrown.
-    , connectionMessageDataSizeLimit  :: !SizeLimit
-      -- ^ 'connectionFrameSizeLimit' is often not enough since a malicious
-      -- client can send many small frames to create a huge message.  This limit
-      -- allows you to protect from that.  If a message exceeds this limit, a
-      -- 'ParseException' is thrown.
-      --
-      -- Note that, if compression is enabled, we check the size of the
-      -- compressed messages, as well as the size of the uncompressed messages
-      -- as we are deflating them to ensure we don't use too much memory in any
-      -- case.
-    }
+data ConnectionOptions = ConnectionOptions {
+  connectionOnPong                :: !(IO ())
+  -- ^ Whenever a 'pong' is received, this IO action is executed. It can be
+  -- used to tickle connections or fire missiles.
+  , connectionCompressionOptions    :: !CompressionOptions
+  -- ^ Enable 'PermessageDeflate'.
+  , connectionStrictUnicode         :: !Bool
+  -- ^ Enable strict unicode on the connection.  This means that if a client
+  -- (or server) sends invalid UTF-8, we will throw a 'UnicodeException'
+  -- rather than replacing it by the unicode replacement character U+FFFD.
+  , connectionFramePayloadSizeLimit :: !SizeLimit
+  -- ^ The maximum size for incoming frame payload size in bytes.  If a
+  -- frame exceeds this limit, a 'ParseException' is thrown.
+  , connectionMessageDataSizeLimit  :: !SizeLimit
+  -- ^ 'connectionFrameSizeLimit' is often not enough since a malicious
+  -- client can send many small frames to create a huge message.  This limit
+  -- allows you to protect from that.  If a message exceeds this limit, a
+  -- 'ParseException' is thrown.
+  --
+  -- Note that, if compression is enabled, we check the size of the
+  -- compressed messages, as well as the size of the uncompressed messages
+  -- as we are deflating them to ensure we don't use too much memory in any
+  -- case.
+  }
 
 
 -- | The default connection options:
@@ -56,13 +55,13 @@ data ConnectionOptions = ConnectionOptions
 -- * Compression is disabled.
 -- * Lenient unicode decoding.
 defaultConnectionOptions :: ConnectionOptions
-defaultConnectionOptions = ConnectionOptions
-    { connectionOnPong                = return ()
-    , connectionCompressionOptions    = NoCompression
-    , connectionStrictUnicode         = False
-    , connectionFramePayloadSizeLimit = mempty
-    , connectionMessageDataSizeLimit  = mempty
-    }
+defaultConnectionOptions = ConnectionOptions {
+  connectionOnPong = return ()
+  , connectionCompressionOptions = NoCompression
+  , connectionStrictUnicode = False
+  , connectionFramePayloadSizeLimit = mempty
+  , connectionMessageDataSizeLimit = mempty
+  }
 
 
 data CompressionOptions
@@ -78,13 +77,13 @@ data CompressionOptions
 -- - "client_no_context_takeover"
 -- - "server_max_window_bits"
 -- - "client_max_window_bits"
-data PermessageDeflate = PermessageDeflate
-    { serverNoContextTakeover :: Bool
-    , clientNoContextTakeover :: Bool
-    , serverMaxWindowBits     :: Int
-    , clientMaxWindowBits     :: Int
-    , pdCompressionLevel      :: Int
-    } deriving (Eq, Show)
+data PermessageDeflate = PermessageDeflate {
+  serverNoContextTakeover :: Bool
+  , clientNoContextTakeover :: Bool
+  , serverMaxWindowBits :: Int
+  , clientMaxWindowBits :: Int
+  , pdCompressionLevel :: Int
+  } deriving (Eq, Show)
 
 
 defaultPermessageDeflate :: PermessageDeflate

@@ -1,51 +1,43 @@
-{-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Network.WebSockets.Hybi13
-    ( headerVersions
-    , finishRequest
-    , finishResponse
-    , encodeMessage
-    , encodeMessages
-    , decodeMessages
-    , createRequest
+module Network.WebSockets.Hybi13 (
+  headerVersions
+  , finishRequest
+  , finishResponse
+  , encodeMessage
+  , encodeMessages
+  , decodeMessages
+  , createRequest
 
-      -- Internal (used for testing)
-    , encodeFrame
-    , parseFrame
-    ) where
-
-
-import qualified Data.ByteString.Builder               as B
-import           Control.Applicative                   (pure, (<$>))
-import           Control.Arrow                         (first)
-import           Control.Exception                     (throwIO)
-import           Control.Monad                         (forM, liftM, unless,
-                                                        when)
-import           Data.Binary.Get                       (Get, getInt64be,
-                                                        getLazyByteString,
-                                                        getWord16be, getWord8)
-import           Data.Binary.Put                       (putWord16be, runPut)
-import           Data.Bits                             ((.&.), (.|.))
-import           Data.ByteString                       (ByteString)
-import qualified Data.ByteString.Base64                as B64
-import           Data.ByteString.Char8                 ()
-import qualified Data.ByteString.Lazy                  as BL
-import           Data.Digest.Pure.SHA                  (bytestringDigest, sha1)
-import           Data.IORef
-import           Data.Monoid                           (mappend, mconcat,
-                                                        mempty)
-import           Data.Tuple                            (swap)
-import           System.Entropy                        as R
-import           System.Random                         (RandomGen, newStdGen)
+  -- Internal (used for testing)
+  , encodeFrame
+  , parseFrame
+  ) where
 
 
-import           Network.WebSockets.Connection.Options
-import           Network.WebSockets.Http
-import           Network.WebSockets.Hybi13.Demultiplex
-import           Network.WebSockets.Hybi13.Mask
-import           Network.WebSockets.Stream             (Stream)
-import qualified Network.WebSockets.Stream             as Stream
-import           Network.WebSockets.Types
+import Control.Arrow
+import Control.Exception (throwIO)
+import Control.Monad
+import Data.Binary.Get
+import Data.Binary.Put (putWord16be, runPut)
+import Data.Bits ((.&.), (.|.))
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Base64 as B64
+import qualified Data.ByteString.Builder as B
+import Data.ByteString.Char8()
+import qualified Data.ByteString.Lazy as BL
+import Data.Digest.Pure.SHA (bytestringDigest, sha1)
+import Data.IORef
+import Data.Tuple (swap)
+import Network.WebSockets.Connection.Options
+import Network.WebSockets.Http
+import Network.WebSockets.Hybi13.Demultiplex
+import Network.WebSockets.Hybi13.Mask
+import Network.WebSockets.Stream (Stream)
+import qualified Network.WebSockets.Stream as Stream
+import Network.WebSockets.Types
+import System.Entropy as R
+import System.Random
 
 
 headerVersions :: [ByteString]

@@ -1,28 +1,25 @@
 -- | Wrapper for supporting multiple protocol versions
 {-# LANGUAGE ExistentialQuantification #-}
-module Network.WebSockets.Protocol
-    ( Protocol (..)
-    , defaultProtocol
-    , protocols
-    , compatible
-    , headerVersions
-    , finishRequest
-    , finishResponse
-    , encodeMessages
-    , decodeMessages
-    , createRequest
-    ) where
+module Network.WebSockets.Protocol (
+  Protocol (..)
+  , defaultProtocol
+  , protocols
+  , compatible
+  , headerVersions
+  , finishRequest
+  , finishResponse
+  , encodeMessages
+  , decodeMessages
+  , createRequest
+  ) where
 
-
-import           Data.ByteString                       (ByteString)
-import qualified Data.ByteString                       as B
-
-
-import           Network.WebSockets.Connection.Options
-import           Network.WebSockets.Http
-import qualified Network.WebSockets.Hybi13             as Hybi13
-import           Network.WebSockets.Stream             (Stream)
-import           Network.WebSockets.Types
+import Data.ByteString (ByteString)
+import qualified Data.ByteString as B
+import Network.WebSockets.Connection.Options
+import Network.WebSockets.Http
+import qualified Network.WebSockets.Hybi13 as Hybi13
+import Network.WebSockets.Stream (Stream)
+import Network.WebSockets.Types
 
 
 data Protocol

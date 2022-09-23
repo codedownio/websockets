@@ -1,81 +1,70 @@
 -- | This module exposes connection internals and should only be used if you
 -- really know what you are doing.
 {-# LANGUAGE OverloadedStrings #-}
-module Network.WebSockets.Connection
-    ( PendingConnection (..)
-    , acceptRequest
-    , AcceptRequest(..)
-    , defaultAcceptRequest
-    , acceptRequestWith
-    , rejectRequest
-    , RejectRequest(..)
-    , defaultRejectRequest
-    , rejectRequestWith
+module Network.WebSockets.Connection (
+  PendingConnection (..)
+  , acceptRequest
+  , AcceptRequest(..)
+  , defaultAcceptRequest
+  , acceptRequestWith
+  , rejectRequest
+  , RejectRequest(..)
+  , defaultRejectRequest
+  , rejectRequestWith
 
-    , Connection (..)
+  , Connection (..)
 
-    , ConnectionOptions (..)
-    , defaultConnectionOptions
+  , ConnectionOptions (..)
+  , defaultConnectionOptions
 
-    , receive
-    , receiveDataMessage
-    , receiveData
-    , send
-    , sendDataMessage
-    , sendDataMessages
-    , sendTextData
-    , sendTextDatas
-    , sendBinaryData
-    , sendBinaryDatas
-    , sendClose
-    , sendCloseCode
-    , sendPing
+  , receive
+  , receiveDataMessage
+  , receiveData
+  , send
+  , sendDataMessage
+  , sendDataMessages
+  , sendTextData
+  , sendTextDatas
+  , sendBinaryData
+  , sendBinaryDatas
+  , sendClose
+  , sendCloseCode
+  , sendPing
 
-    , withPingThread
-    , forkPingThread
-    , pingThread
+  , withPingThread
+  , forkPingThread
+  , pingThread
 
-    , CompressionOptions (..)
-    , PermessageDeflate (..)
-    , defaultPermessageDeflate
+  , CompressionOptions (..)
+  , PermessageDeflate (..)
+  , defaultPermessageDeflate
 
-    , SizeLimit (..)
-    ) where
-
-
-import           Control.Applicative                             ((<$>))
-import           Control.Concurrent                              (forkIO,
-                                                                  threadDelay)
-import qualified Control.Concurrent.Async                        as Async
-import           Control.Exception                               (AsyncException,
-                                                                  fromException,
-                                                                  handle,
-                                                                  throwIO)
-import           Control.Monad                                   (foldM, unless,
-                                                                  when)
-import qualified Data.ByteString                                 as B
-import qualified Data.ByteString.Builder                         as Builder
-import qualified Data.ByteString.Char8                           as B8
-import           Data.IORef                                      (IORef,
-                                                                  newIORef,
-                                                                  readIORef,
-                                                                  writeIORef)
-import           Data.List                                       (find)
-import           Data.Maybe                                      (catMaybes)
-import qualified Data.Text                                       as T
-import           Data.Word                                       (Word16)
-import           Prelude
+  , SizeLimit (..)
+  ) where
 
 
-import           Network.WebSockets.Connection.Options
-import           Network.WebSockets.Extensions                   as Extensions
-import           Network.WebSockets.Extensions.PermessageDeflate
-import           Network.WebSockets.Extensions.StrictUnicode
-import           Network.WebSockets.Http
-import           Network.WebSockets.Protocol
-import           Network.WebSockets.Stream                       (Stream)
-import qualified Network.WebSockets.Stream                       as Stream
-import           Network.WebSockets.Types
+import Control.Concurrent
+import qualified Control.Concurrent.Async as Async
+import Control.Exception
+import Control.Monad
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Builder as Builder
+import qualified Data.ByteString.Char8 as B8
+import Data.IORef
+import Data.List
+import Data.Maybe
+import qualified Data.Text as T
+import Data.Word
+import Network.WebSockets.Connection.Options
+import Network.WebSockets.Extensions as Extensions
+import Network.WebSockets.Extensions.PermessageDeflate
+import Network.WebSockets.Extensions.StrictUnicode
+import Network.WebSockets.Http
+import Network.WebSockets.Protocol
+import Network.WebSockets.Stream                       (Stream)
+import qualified Network.WebSockets.Stream as Stream
+import Network.WebSockets.Types
+import Prelude
 
 
 -- | A new client connected to the server. We haven't accepted the connection

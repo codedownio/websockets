@@ -1,37 +1,36 @@
 -- | Demultiplexing of frames into messages
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
-module Network.WebSockets.Hybi13.Demultiplex
-    ( FrameType (..)
-    , Frame (..)
-    , DemultiplexState
-    , emptyDemultiplexState
-    , DemultiplexResult (..)
-    , demultiplex
-    ) where
+module Network.WebSockets.Hybi13.Demultiplex (
+  FrameType (..)
+  , Frame (..)
+  , DemultiplexState
+  , emptyDemultiplexState
+  , DemultiplexResult (..)
+  , demultiplex
+  ) where
 
 
-import           Data.ByteString.Builder               (Builder)
-import qualified Data.ByteString.Builder               as B
-import           Control.Exception                     (Exception)
-import           Data.Binary.Get                       (getWord16be, runGet)
-import qualified Data.ByteString.Lazy                  as BL
-import           Data.Int                              (Int64)
-import           Data.Monoid                           (mappend)
-import           Data.Typeable                         (Typeable)
-import           Network.WebSockets.Connection.Options
-import           Network.WebSockets.Types
+import Control.Exception
+import Data.Binary.Get (getWord16be, runGet)
+import Data.ByteString.Builder (Builder)
+import qualified Data.ByteString.Builder as B
+import qualified Data.ByteString.Lazy as BL
+import Data.Int (Int64)
+import Data.Typeable (Typeable)
+import Network.WebSockets.Connection.Options
+import Network.WebSockets.Types
 
 
 -- | A low-level representation of a WebSocket packet
-data Frame = Frame
-    { frameFin     :: !Bool
-    , frameRsv1    :: !Bool
-    , frameRsv2    :: !Bool
-    , frameRsv3    :: !Bool
-    , frameType    :: !FrameType
-    , framePayload :: !BL.ByteString
-    } deriving (Eq, Show)
+data Frame = Frame {
+  frameFin     :: !Bool
+  , frameRsv1    :: !Bool
+  , frameRsv2    :: !Bool
+  , frameRsv3    :: !Bool
+  , frameType    :: !FrameType
+  , framePayload :: !BL.ByteString
+  } deriving (Eq, Show)
 
 
 -- | The type of a frame. Not all types are allowed for all protocols.

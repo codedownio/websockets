@@ -1,37 +1,33 @@
 -- | Lightweight abstraction over an input/output stream.
 {-# LANGUAGE CPP #-}
-module Network.WebSockets.Stream
-    ( Stream
-    , makeStream
-    , makeSocketStream
-    , makeEchoStream
-    , parse
-    , parseBin
-    , write
-    , close
-    ) where
+module Network.WebSockets.Stream (
+  Stream
+  , makeStream
+  , makeSocketStream
+  , makeEchoStream
+  , parse
+  , parseBin
+  , write
+  , close
+  ) where
 
-import           Control.Concurrent.MVar        (MVar, newEmptyMVar, newMVar,
-                                                 putMVar, takeMVar, withMVar)
-import           Control.Exception              (SomeException, SomeAsyncException, throwIO, catch, fromException)
-import           Control.Monad                  (forM_)
-import qualified Data.Attoparsec.ByteString     as Atto
-import qualified Data.Binary.Get                as BIN
-import qualified Data.ByteString                as B
-import qualified Data.ByteString.Lazy           as BL
-import           Data.IORef                     (IORef, atomicModifyIORef',
-                                                 newIORef, readIORef,
-                                                 writeIORef)
-import qualified Network.Socket                 as S
-import qualified Network.Socket.ByteString      as SB (recv)
+import Control.Concurrent.MVar
+import Control.Exception
+import Control.Monad
+import qualified Data.Attoparsec.ByteString as Atto
+import qualified Data.Binary.Get as BIN
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
+import Data.IORef
+import qualified Network.Socket as S
+import qualified Network.Socket.ByteString as SB (recv)
+import Network.WebSockets.Types
 
 #if !defined(mingw32_HOST_OS)
 import qualified Network.Socket.ByteString.Lazy as SBL (sendAll)
 #else
 import qualified Network.Socket.ByteString      as SB (sendAll)
 #endif
-
-import           Network.WebSockets.Types
 
 
 -- | State of the stream
