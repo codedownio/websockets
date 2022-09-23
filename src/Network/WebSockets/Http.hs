@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 -- | Module dealing with HTTP: request data types, encoding and decoding...
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
@@ -30,7 +29,6 @@ module Network.WebSockets.Http
     ) where
 
 
---------------------------------------------------------------------------------
 import qualified Data.ByteString.Builder                   as Builder
 import qualified Data.ByteString.Builder.Extra             as Builder
 import           Control.Applicative                       (pure, (*>), (<$>),
@@ -48,12 +46,10 @@ import           Data.Monoid                               (mappend, mconcat)
 import qualified Network.WebSockets.Extensions.Description as Extensions
 
 
---------------------------------------------------------------------------------
 -- | Request headers
 type Headers = [(CI.CI ByteString, ByteString)]
 
 
---------------------------------------------------------------------------------
 -- | An HTTP request. The request body is not yet read.
 data RequestHead = RequestHead
     { requestPath    :: !B.ByteString
@@ -62,13 +58,11 @@ data RequestHead = RequestHead
     } deriving (Show)
 
 
---------------------------------------------------------------------------------
 -- | A request with a body
 data Request = Request RequestHead B.ByteString
     deriving (Show)
 
 
---------------------------------------------------------------------------------
 -- | HTTP response, without body.
 data ResponseHead = ResponseHead
     { responseCode    :: !Int
@@ -77,13 +71,11 @@ data ResponseHead = ResponseHead
     } deriving (Show)
 
 
---------------------------------------------------------------------------------
 -- | A response including a body
 data Response = Response ResponseHead B.ByteString
     deriving (Show)
 
 
---------------------------------------------------------------------------------
 -- | Error in case of failed handshake. Will be thrown as an 'Exception'.
 --
 -- TODO: This should probably be in the Handshake module, and is solely here to
@@ -107,11 +99,9 @@ data HandshakeException
     deriving (Show, Typeable)
 
 
---------------------------------------------------------------------------------
 instance Exception HandshakeException
 
 
---------------------------------------------------------------------------------
 encodeRequestHead :: RequestHead -> Builder.Builder
 encodeRequestHead (RequestHead path headers _) =
     Builder.byteStringCopy "GET "      `mappend`
@@ -125,13 +115,11 @@ encodeRequestHead (RequestHead path headers _) =
         [CI.original k, ": ", v, "\r\n"]
 
 
---------------------------------------------------------------------------------
 encodeRequest :: Request -> Builder.Builder
 encodeRequest (Request head' body) =
     encodeRequestHead head' `mappend` Builder.byteStringCopy body
 
 
---------------------------------------------------------------------------------
 -- | Parse an initial request
 decodeRequestHead :: Bool -> A.Parser RequestHead
 decodeRequestHead isSecure = RequestHead
@@ -147,7 +135,6 @@ decodeRequestHead isSecure = RequestHead
         <* A.string "HTTP/1.1" <* newline
 
 
---------------------------------------------------------------------------------
 -- | Encode an HTTP upgrade response
 encodeResponseHead :: ResponseHead -> Builder.Builder
 encodeResponseHead (ResponseHead code msg headers) =
@@ -163,13 +150,11 @@ encodeResponseHead (ResponseHead code msg headers) =
         [CI.original k, ": ", v, "\r\n"]
 
 
---------------------------------------------------------------------------------
 encodeResponse :: Response -> Builder.Builder
 encodeResponse (Response head' body) =
     encodeResponseHead head' `mappend` Builder.byteStringCopy body
 
 
---------------------------------------------------------------------------------
 -- | An upgrade response
 response101 :: Headers -> B.ByteString -> Response
 response101 headers = Response
@@ -177,13 +162,11 @@ response101 headers = Response
         (("Upgrade", "websocket") : ("Connection", "Upgrade") : headers))
 
 
---------------------------------------------------------------------------------
 -- | Bad request
 response400 :: Headers -> B.ByteString -> Response
 response400 headers = Response (ResponseHead 400 "Bad Request" headers)
 
 
---------------------------------------------------------------------------------
 -- | HTTP response parser
 decodeResponseHead :: A.Parser ResponseHead
 decodeResponseHead = ResponseHead
@@ -199,12 +182,10 @@ decodeResponseHead = ResponseHead
     message = A.takeWhile (/= c2w '\r') <* newline
 
 
---------------------------------------------------------------------------------
 decodeResponse :: A.Parser Response
 decodeResponse = Response <$> decodeResponseHead <*> A.takeByteString
 
 
---------------------------------------------------------------------------------
 getRequestHeader :: RequestHead
                  -> CI.CI ByteString
                  -> Either HandshakeException ByteString
@@ -214,7 +195,6 @@ getRequestHeader rq key = case lookup key (requestHeaders rq) of
         "Header missing: " ++ BC.unpack (CI.original key)
 
 
---------------------------------------------------------------------------------
 getResponseHeader :: ResponseHead
                   -> CI.CI ByteString
                   -> Either HandshakeException ByteString
@@ -224,14 +204,12 @@ getResponseHeader rsp key = case lookup key (responseHeaders rsp) of
         "Header missing: " ++ BC.unpack (CI.original key)
 
 
---------------------------------------------------------------------------------
 -- | Get the @Sec-WebSocket-Version@ header
 getRequestSecWebSocketVersion :: RequestHead -> Maybe B.ByteString
 getRequestSecWebSocketVersion p =
     lookup "Sec-WebSocket-Version" (requestHeaders p)
 
 
---------------------------------------------------------------------------------
 -- | List of subprotocols specified by the client, in order of preference.
 -- If the client did not specify a list of subprotocols, this will be the
 -- empty list.
@@ -242,7 +220,6 @@ getRequestSubprotocols rh = maybe [] parse mproto
         parse = filter (not . B.null) . BC.splitWith (\o -> o == ',' || o == ' ')
 
 
---------------------------------------------------------------------------------
 -- | Get the @Sec-WebSocket-Extensions@ header
 getRequestSecWebSocketExtensions
     :: RequestHead -> Either HandshakeException Extensions.ExtensionDescriptions
@@ -255,7 +232,6 @@ getRequestSecWebSocketExtensions rq =
                 "Malformed Sec-WebSockets-Extensions: " ++ err
 
 
---------------------------------------------------------------------------------
 decodeHeaderLine :: A.Parser (CI.CI ByteString, ByteString)
 decodeHeaderLine = (,)
     <$> (CI.mk <$> A.takeWhile1 (/= c2w ':'))

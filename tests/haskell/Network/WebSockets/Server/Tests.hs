@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Network.WebSockets.Server.Tests
@@ -6,7 +5,6 @@ module Network.WebSockets.Server.Tests
     ) where
 
 
---------------------------------------------------------------------------------
 import           Control.Applicative            ((<$>), (<|>))
 import           Control.Concurrent             (forkIO, killThread,
                                                  threadDelay)
@@ -15,7 +13,6 @@ import           Control.Monad                  (forever, replicateM, unless)
 import           Data.IORef                     (IORef, newIORef, readIORef,
                                                  writeIORef)
 
---------------------------------------------------------------------------------
 import qualified Data.ByteString.Lazy           as BL
 import           Data.Text                      (Text)
 import           System.Environment             (getEnvironment)
@@ -27,12 +24,10 @@ import           Test.QuickCheck.Gen            (Gen (..))
 import           Test.QuickCheck.Random         (newQCGen)
 
 
---------------------------------------------------------------------------------
 import           Network.WebSockets
 import           Network.WebSockets.Tests.Util
 
 
---------------------------------------------------------------------------------
 tests :: Test
 tests = testGroup "Network.WebSockets.Server.Tests"
     [ testCase "simple server/client" testSimpleServerClient
@@ -42,12 +37,10 @@ tests = testGroup "Network.WebSockets.Server.Tests"
     ]
 
 
---------------------------------------------------------------------------------
 testSimpleServerClient :: Assertion
 testSimpleServerClient = testServerClient "127.0.0.1" $ \conn -> mapM_ (sendTextData conn)
 
 
---------------------------------------------------------------------------------
 -- | This is a bit ugly but it seems CI services don't support ipv6 in 2018.
 skipIpv6Incompatible :: Assertion -> Assertion
 skipIpv6Incompatible assertion = do
@@ -56,16 +49,13 @@ skipIpv6Incompatible assertion = do
         Just "true" -> return ()
         _           -> assertion
 
---------------------------------------------------------------------------------
 testIpv6Server :: Assertion
 testIpv6Server = skipIpv6Incompatible $
     testServerClient "::1" $ \conn -> mapM_ (sendTextData conn)
 
---------------------------------------------------------------------------------
 testBulkServerClient :: Assertion
 testBulkServerClient = testServerClient "127.0.0.1" sendTextDatas
 
---------------------------------------------------------------------------------
 testServerClient :: String -> (Connection -> [BL.ByteString] -> IO ()) -> Assertion
 testServerClient host sendMessages = withEchoServer host 42940 "Bye" $ do
     texts  <- map unArbitraryUtf8 <$> sample
@@ -82,7 +72,6 @@ testServerClient host sendMessages = withEchoServer host 42940 "Bye" $ do
 
 
 
---------------------------------------------------------------------------------
 testOnPong :: Assertion
 testOnPong = withEchoServer "127.0.0.1" 42941 "Bye" $ do
     gotPong <- newIORef False
@@ -104,19 +93,16 @@ testOnPong = withEchoServer "127.0.0.1" 42941 "Bye" $ do
         return $ "A fsh!" == (msg :: Text)
 
 
---------------------------------------------------------------------------------
 sample :: Arbitrary a => IO [a]
 sample = do
     gen <- newQCGen
     return $ (unGen arbitrary) gen 512
 
 
---------------------------------------------------------------------------------
 waitSome :: IO ()
 waitSome = threadDelay $ 200 * 1000
 
 
---------------------------------------------------------------------------------
 -- HOLY SHIT WHAT SORT OF ATROCITY IS THIS?!?!?!
 --
 -- The problem is that sometimes, the server hasn't been brought down yet
@@ -129,7 +115,6 @@ retry :: IO a -> IO a
 retry action = (\(_ :: SomeException) -> waitSome >> action) `handle` action
 
 
---------------------------------------------------------------------------------
 withEchoServer :: String -> Int -> BL.ByteString -> IO a -> IO a
 withEchoServer host port expectedClose action = do
     cRef <- newIORef False
@@ -162,7 +147,6 @@ withEchoServer host port expectedClose action = do
         error "Unexpected unicode exception"
 
 
---------------------------------------------------------------------------------
 expectCloseException :: Connection -> BL.ByteString -> IO ()
 expectCloseException conn msg = act `catch` handler
     where

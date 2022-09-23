@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 -- | This part of the library provides you with utilities to create WebSockets
 -- clients (in addition to servers).
 module Network.WebSockets.Client
@@ -17,7 +16,6 @@ module Network.WebSockets.Client
     ) where
 
 
---------------------------------------------------------------------------------
 import qualified Data.ByteString.Builder       as Builder
 import           Control.Exception             (bracket, finally, throwIO)
 import           Control.Monad                 (void)
@@ -27,7 +25,6 @@ import qualified Data.Text.Encoding            as T
 import qualified Network.Socket                as S
 
 
---------------------------------------------------------------------------------
 import           Network.WebSockets.Connection
 import           Network.WebSockets.Http
 import           Network.WebSockets.Protocol
@@ -36,13 +33,11 @@ import qualified Network.WebSockets.Stream     as Stream
 import           Network.WebSockets.Types
 
 
---------------------------------------------------------------------------------
 -- | A client application interacting with a single server. Once this 'IO'
 -- action finished, the underlying socket is closed automatically.
 type ClientApp a = Connection -> IO a
 
 
---------------------------------------------------------------------------------
 -- TODO: Maybe this should all be strings
 runClient :: String       -- ^ Host
           -> Int          -- ^ Port
@@ -53,7 +48,6 @@ runClient host port path ws =
     runClientWith host port path defaultConnectionOptions [] ws
 
 
---------------------------------------------------------------------------------
 runClientWith :: String             -- ^ Host
               -> Int                -- ^ Port
               -> String             -- ^ Path
@@ -83,7 +77,6 @@ runClientWith host port path0 opts customHeaders app = do
     return res
 
 
---------------------------------------------------------------------------------
 
 runClientWithStream
     :: Stream
@@ -169,7 +162,6 @@ streamToClientConnection stream opts = do
     protocol = defaultProtocol
 
 
---------------------------------------------------------------------------------
 runClientWithSocket :: S.Socket           -- ^ Socket
                     -> String             -- ^ Host
                     -> String             -- ^ Path

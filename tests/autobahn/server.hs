@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 -- | The server part of the tests
 {-# LANGUAGE OverloadedStrings #-}
 module Main
@@ -21,19 +20,16 @@ websockets-autobahn
 -}
 
 
---------------------------------------------------------------------------------
 import           Control.Exception          (catch)
 import           Data.ByteString.Lazy.Char8 ()
 import           Data.String                (fromString)
 import           Data.Version               (showVersion)
 
 
---------------------------------------------------------------------------------
 import qualified Network.WebSockets         as WS
 import qualified Paths_websockets
 
 
---------------------------------------------------------------------------------
 echoDataMessage :: WS.Connection -> IO ()
 echoDataMessage conn = go 0
   where
@@ -44,7 +40,6 @@ echoDataMessage conn = go 0
         go (x + 1)
 
 
---------------------------------------------------------------------------------
 infoHeaders :: WS.Headers
 infoHeaders =
     [ ( "Server"
@@ -53,7 +48,6 @@ infoHeaders =
     ]
 
 
---------------------------------------------------------------------------------
 -- | Application
 application :: WS.ServerApp
 application pc = do
@@ -75,7 +69,6 @@ application pc = do
         putStrLn $ "Recevied unicode exception: " ++ show e
 
 
---------------------------------------------------------------------------------
 -- | Accepts clients, spawns a single handler for each one.
 main :: IO ()
 main = WS.runServerWithOptions options application

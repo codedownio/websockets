@@ -1,11 +1,9 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 module Network.WebSockets.Extensions.PermessageDeflate.Tests
     ( tests
     ) where
 
 
---------------------------------------------------------------------------------
 import           Control.Exception                               (try)
 import qualified Data.ByteString.Lazy                            as BL
 import           Network.WebSockets.Extensions.PermessageDeflate
@@ -18,7 +16,6 @@ import           Test.HUnit                                      (Assertion,
                                                                   (@?=))
 
 
---------------------------------------------------------------------------------
 tests :: Test
 tests = testGroup "Network.WebSockets.Extensions.PermessageDeflate.Tests"
     [ testCase "OK 1" $ do

@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TupleSections     #-}
@@ -13,7 +12,6 @@ module Network.WebSockets.Extensions.PermessageDeflate
     ) where
 
 
---------------------------------------------------------------------------------
 import           Control.Applicative                       ((<$>))
 import           Control.Exception                         (throwIO)
 import           Control.Monad                             (foldM, unless)
@@ -34,7 +32,6 @@ import           Prelude
 import           Text.Read                                 (readMaybe)
 
 
---------------------------------------------------------------------------------
 -- | Convert the parameters to an 'ExtensionDescription' that we can put in a
 -- 'Sec-WebSocket-Extensions' header.
 toExtensionDescription :: PermessageDeflate -> ExtensionDescription
@@ -50,7 +47,6 @@ toExtensionDescription PermessageDeflate {..} = ExtensionDescription
     param = Just . B8.pack . show
 
 
---------------------------------------------------------------------------------
 toHeaders :: PermessageDeflate -> Headers
 toHeaders pmd =
     [ ( "Sec-WebSocket-Extensions"
@@ -59,7 +55,6 @@ toHeaders pmd =
     ]
 
 
---------------------------------------------------------------------------------
 negotiateDeflate
     :: SizeLimit -> Maybe PermessageDeflate -> NegotiateExtension
 negotiateDeflate messageLimit pmd0 exts0 = do
@@ -100,7 +95,6 @@ negotiateDeflate messageLimit pmd0 exts0 = do
     negotiateDeflateOpts _ _ = Right ([], Nothing)
 
 
---------------------------------------------------------------------------------
 setParam
     :: PermessageDeflate -> ExtensionParam -> Either String PermessageDeflate
 setParam pmd ("server_no_context_takeover", _) =
@@ -126,7 +120,6 @@ setParam pmd ("client_max_window_bits", Just param) = do
 setParam pmd (_, _) = Right pmd
 
 
---------------------------------------------------------------------------------
 parseWindow :: B.ByteString -> Either String Int
 parseWindow bs8 = case readMaybe (B8.unpack bs8) of
     Just w
@@ -135,7 +128,6 @@ parseWindow bs8 = case readMaybe (B8.unpack bs8) of
     Nothing -> Left $ "Can't parse window: " ++ show bs8
 
 
---------------------------------------------------------------------------------
 -- | If the window_bits parameter is set to 8, we must set it to 9 instead.
 --
 -- Related issues:
@@ -157,25 +149,21 @@ fixWindowBits n
     | otherwise = n
 
 
---------------------------------------------------------------------------------
 appTailL :: BL.ByteString
 appTailL = BL.pack [0x00,0x00,0xff,0xff]
 
 
---------------------------------------------------------------------------------
 maybeStrip :: BL.ByteString -> BL.ByteString
 maybeStrip x | appTailL `BL.isSuffixOf` x = BL.take (BL.length x - 4) x
 maybeStrip x = x
 
 
---------------------------------------------------------------------------------
 rejectExtensions :: Message -> IO Message
 rejectExtensions (DataMessage rsv1 rsv2 rsv3 _) | rsv1 || rsv2 || rsv3 =
     throwIO $ CloseRequest 1002 "Protocol Error"
 rejectExtensions x = return x
 
 
---------------------------------------------------------------------------------
 makeMessageDeflater
     :: Maybe PermessageDeflate -> IO (Message -> IO Message)
 makeMessageDeflater Nothing = return rejectExtensions
@@ -189,7 +177,6 @@ makeMessageDeflater (Just pmd)
         return $ \msg ->
             deflateMessageWith (deflateBody ptr) msg
   where
-    ----------------------------------------------------------------------------
     initDeflate :: PermessageDeflate -> IO Zlib.Deflate
     initDeflate PermessageDeflate {..} =
         Zlib.initDeflate
@@ -197,7 +184,6 @@ makeMessageDeflater (Just pmd)
             (Zlib.WindowBits (- (fixWindowBits serverMaxWindowBits)))
 
 
-    ----------------------------------------------------------------------------
     deflateMessageWith
         :: (BL.ByteString -> IO BL.ByteString)
         -> Message -> IO Message
@@ -210,7 +196,6 @@ makeMessageDeflater (Just pmd)
     deflateMessageWith _ x = return x
 
 
-    ----------------------------------------------------------------------------
     deflateBody :: Zlib.Deflate -> BL.ByteString -> IO BL.ByteString
     deflateBody ptr = fmap maybeStrip . go . BL.toChunks
       where
@@ -221,7 +206,6 @@ makeMessageDeflater (Just pmd)
             (chunk <>) <$> go cs
 
 
---------------------------------------------------------------------------------
 dePopper :: Zlib.Popper -> IO BL.ByteString
 dePopper p = p >>= \res -> case res of
     Zlib.PRDone    -> return BL.empty
@@ -229,7 +213,6 @@ dePopper p = p >>= \res -> case res of
     Zlib.PRError x -> throwIO $ CloseRequest 1002 (BL8.pack (show x))
 
 
---------------------------------------------------------------------------------
 makeMessageInflater
     :: SizeLimit -> Maybe PermessageDeflate
     -> IO (Message -> IO Message)
@@ -244,14 +227,12 @@ makeMessageInflater messageLimit (Just pmd)
         return $ \msg ->
             inflateMessageWith (inflateBody ptr) msg
   where
-    --------------------------------------------------------------------------------
     initInflate :: PermessageDeflate -> IO Zlib.Inflate
     initInflate PermessageDeflate {..} =
         Zlib.initInflate
             (Zlib.WindowBits (- (fixWindowBits clientMaxWindowBits)))
 
 
-    ----------------------------------------------------------------------------
     inflateMessageWith
         :: (BL.ByteString -> IO BL.ByteString)
         -> Message -> IO Message
@@ -264,7 +245,6 @@ makeMessageInflater messageLimit (Just pmd)
     inflateMessageWith _ x = return x
 
 
-    ----------------------------------------------------------------------------
     inflateBody :: Zlib.Inflate -> BL.ByteString -> IO BL.ByteString
     inflateBody ptr =
         go 0 . BL.toChunks . (<> appTailL)
@@ -281,7 +261,6 @@ makeMessageInflater messageLimit (Just pmd)
             (chunk <>) <$> go size1 cs
 
 
-    ----------------------------------------------------------------------------
     checkSize :: Int64 -> IO ()
     checkSize size = unless (atMostSizeLimit size messageLimit) $ throwIO $
         ParseException $ "Message of size " ++ show size ++ " exceeded limit"

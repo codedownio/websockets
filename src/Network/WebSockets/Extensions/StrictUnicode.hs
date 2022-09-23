@@ -1,17 +1,14 @@
---------------------------------------------------------------------------------
 module Network.WebSockets.Extensions.StrictUnicode
     ( strictUnicode
     ) where
 
 
---------------------------------------------------------------------------------
 import           Control.Exception             (throwIO)
 import qualified Data.ByteString.Lazy          as BL
 import           Network.WebSockets.Extensions
 import           Network.WebSockets.Types
 
 
---------------------------------------------------------------------------------
 strictUnicode :: Extension
 strictUnicode = Extension
     { extHeaders = []
@@ -20,7 +17,6 @@ strictUnicode = Extension
     }
 
 
---------------------------------------------------------------------------------
 strictParse :: Maybe Message -> IO (Maybe Message)
 strictParse Nothing = return Nothing
 strictParse (Just (DataMessage rsv1 rsv2 rsv3 (Text bl _))) =

@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE ScopedTypeVariables #-}
 module Network.WebSockets
     ( -- * Incoming connections and handshaking
@@ -88,7 +87,6 @@ module Network.WebSockets
     ) where
 
 
---------------------------------------------------------------------------------
 import           Network.WebSockets.Client
 import           Network.WebSockets.Connection
 import           Network.WebSockets.Http

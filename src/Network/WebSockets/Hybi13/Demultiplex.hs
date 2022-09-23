@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 -- | Demultiplexing of frames into messages
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
@@ -12,7 +11,6 @@ module Network.WebSockets.Hybi13.Demultiplex
     ) where
 
 
---------------------------------------------------------------------------------
 import           Data.ByteString.Builder               (Builder)
 import qualified Data.ByteString.Builder               as B
 import           Control.Exception                     (Exception)
@@ -25,7 +23,6 @@ import           Network.WebSockets.Connection.Options
 import           Network.WebSockets.Types
 
 
---------------------------------------------------------------------------------
 -- | A low-level representation of a WebSocket packet
 data Frame = Frame
     { frameFin     :: !Bool
@@ -37,7 +34,6 @@ data Frame = Frame
     } deriving (Eq, Show)
 
 
---------------------------------------------------------------------------------
 -- | The type of a frame. Not all types are allowed for all protocols.
 data FrameType
     = ContinuationFrame
@@ -49,29 +45,24 @@ data FrameType
     deriving (Eq, Show)
 
 
---------------------------------------------------------------------------------
 -- | Thrown if the client sends invalid multiplexed data
 data DemultiplexException = DemultiplexException
     deriving (Show, Typeable)
 
 
---------------------------------------------------------------------------------
 instance Exception DemultiplexException
 
 
---------------------------------------------------------------------------------
 -- | Internal state used by the demultiplexer
 data DemultiplexState
     = EmptyDemultiplexState
     | DemultiplexState !Int64 !Builder !(Builder -> Message)
 
 
---------------------------------------------------------------------------------
 emptyDemultiplexState :: DemultiplexState
 emptyDemultiplexState = EmptyDemultiplexState
 
 
---------------------------------------------------------------------------------
 -- | Result of demultiplexing
 data DemultiplexResult
     = DemultiplexSuccess  Message
@@ -79,7 +70,6 @@ data DemultiplexResult
     | DemultiplexContinue
 
 
---------------------------------------------------------------------------------
 demultiplex :: SizeLimit
             -> DemultiplexState
             -> Frame

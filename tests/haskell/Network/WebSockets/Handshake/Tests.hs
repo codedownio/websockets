@@ -1,11 +1,9 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 module Network.WebSockets.Handshake.Tests
     ( tests
     ) where
 
 
---------------------------------------------------------------------------------
 import           Control.Concurrent             (forkIO)
 import           Control.Exception              (handle)
 import           Data.ByteString.Char8          ()
@@ -17,14 +15,12 @@ import           Test.Framework.Providers.HUnit (testCase)
 import           Test.HUnit                     (Assertion, assert, (@?=))
 
 
---------------------------------------------------------------------------------
 import           Network.WebSockets
 import           Network.WebSockets.Connection
 import           Network.WebSockets.Http
 import qualified Network.WebSockets.Stream      as Stream
 
 
---------------------------------------------------------------------------------
 tests :: Test
 tests = testGroup "Network.WebSockets.Handshake.Test"
     [ testCase "handshake Hybi13"                   testHandshakeHybi13
@@ -37,7 +33,6 @@ tests = testGroup "Network.WebSockets.Handshake.Test"
     ]
 
 
---------------------------------------------------------------------------------
 testHandshake :: RequestHead -> (PendingConnection -> IO a) -> IO ResponseHead
 testHandshake rq app = do
     echo <- Stream.makeEchoStream
@@ -53,12 +48,10 @@ testHandshake rq app = do
     nullify _ = return ()
 
 
---------------------------------------------------------------------------------
 (!) :: Eq a => [(a, b)] -> a -> b
 assoc ! key = fromJust (lookup key assoc)
 
 
---------------------------------------------------------------------------------
 rq13 :: RequestHead
 rq13 = RequestHead "/mychat"
     [ ("Host", "server.example.com")
@@ -72,7 +65,6 @@ rq13 = RequestHead "/mychat"
     False
 
 
---------------------------------------------------------------------------------
 testHandshakeHybi13 :: Assertion
 testHandshakeHybi13 = do
     onAcceptFired                     <- newIORef False
@@ -86,7 +78,6 @@ testHandshakeHybi13 = do
     headers ! "Connection"           @?= "Upgrade"
     lookup "Sec-WebSocket-Protocol" headers @?= Nothing
 
---------------------------------------------------------------------------------
 testHandshakeHybi13WithProto :: Assertion
 testHandshakeHybi13WithProto = do
     onAcceptFired                     <- newIORef False
@@ -102,7 +93,6 @@ testHandshakeHybi13WithProto = do
     headers ! "Connection"           @?= "Upgrade"
     headers ! "Sec-WebSocket-Protocol" @?= "superchat"
 
---------------------------------------------------------------------------------
 testHandshakeHybi13WithHeaders :: Assertion
 testHandshakeHybi13WithHeaders = do
     onAcceptFired                     <- newIORef False
@@ -119,7 +109,6 @@ testHandshakeHybi13WithHeaders = do
     headers ! "Set-Cookie"           @?= "sid=foo"
     lookup "Sec-WebSocket-Protocol" headers @?= Nothing
 
---------------------------------------------------------------------------------
 testHandshakeHybi13WithProtoAndHeaders :: Assertion
 testHandshakeHybi13WithProtoAndHeaders = do
     onAcceptFired                     <- newIORef False
@@ -137,7 +126,6 @@ testHandshakeHybi13WithProtoAndHeaders = do
     headers ! "Set-Cookie"           @?= "sid=foo"
 
 
---------------------------------------------------------------------------------
 testHandshakeReject :: Assertion
 testHandshakeReject = do
     ResponseHead code _ _ <- testHandshake rq13 $ \pc ->
@@ -146,7 +134,6 @@ testHandshakeReject = do
     code @?= 400
 
 
---------------------------------------------------------------------------------
 testHandshakeRejectWithCode :: Assertion
 testHandshakeRejectWithCode = do
     ResponseHead code _ _ <- testHandshake rq13 $ \pc ->
@@ -158,7 +145,6 @@ testHandshakeRejectWithCode = do
     code @?= 401
 
 
---------------------------------------------------------------------------------
 -- I don't believe this one is supported yet
 rq9000 :: RequestHead
 rq9000 = RequestHead "/chat"
@@ -173,7 +159,6 @@ rq9000 = RequestHead "/chat"
     False
 
 
---------------------------------------------------------------------------------
 testHandshakeHybi9000 :: Assertion
 testHandshakeHybi9000 = do
     ResponseHead code _ headers <- testHandshake rq9000 $ \pc ->

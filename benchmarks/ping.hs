@@ -1,16 +1,13 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 
---------------------------------------------------------------------------------
 import Control.Monad (forever)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import qualified Network.WebSockets as WS
 
 
---------------------------------------------------------------------------------
 ping :: WS.ServerApp
 ping pending = do
     conn <- WS.acceptRequest pending
@@ -21,6 +18,5 @@ ping pending = do
         WS.sendTextData conn $ BC.pack $ "Ping " ++ show (n + 1)
 
 
---------------------------------------------------------------------------------
 main :: IO ()
 main = WS.runServer "0.0.0.0" 8088 ping

@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 -- | The server part of the tests
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards     #-}
@@ -7,7 +6,6 @@ module Main
     ) where
 
 
---------------------------------------------------------------------------------
 import           Control.Exception          (catch)
 import           Control.Monad              (forM_, forever, void)
 import           Control.Monad.Trans        (liftIO)
@@ -18,7 +16,6 @@ import qualified Data.Text.Lazy             as TL
 import qualified Network.WebSockets         as WS
 
 
---------------------------------------------------------------------------------
 echoText :: WS.Connection -> IO ()
 echoText conn = forever $ do
     msg <- WS.receiveData conn
@@ -26,7 +23,6 @@ echoText conn = forever $ do
     WS.sendTextData conn msg
 
 
---------------------------------------------------------------------------------
 closeMe :: WS.Connection -> IO ()
 closeMe conn = do
     msg <- WS.receiveData conn
@@ -38,7 +34,6 @@ closeMe conn = do
         _           -> error "closeme: unexpected input"
 
 
---------------------------------------------------------------------------------
 ping :: WS.Connection -> IO ()
 ping conn = do
     forM_ ["Hai", "Come again?", "Right!"] $ \msg -> do
@@ -53,12 +48,10 @@ ping conn = do
     WS.sendTextData conn ("OK" :: Text)
 
 
---------------------------------------------------------------------------------
 echo :: WS.Connection -> IO ()
 echo conn = forever $ WS.receive conn >>= WS.send conn
 
 
---------------------------------------------------------------------------------
 tests :: [(ByteString, WS.Connection -> IO ())]
 tests =
     [ ("/echo-text",   echoText)
@@ -69,7 +62,6 @@ tests =
     ]
 
 
---------------------------------------------------------------------------------
 -- | Application
 application :: WS.ServerApp
 application pc = do
@@ -101,7 +93,6 @@ application pc = do
         putStrLn $ "Recevied unicode exception: " ++ show e
 
 
---------------------------------------------------------------------------------
 -- | Accepts clients, spawns a single handler for each one.
 main :: IO ()
 main = WS.runServerWith "0.0.0.0" 8000 options application

@@ -18,13 +18,11 @@ import qualified    Network.WebSockets              as WS
 import qualified    Network.WebSockets.Connection   as WS
 import qualified    Network.WebSockets.Stream       as WS
 
---------------------------------------------------------------------------------
 -- | Returns whether or not the given 'Wai.Request' is a WebSocket request.
 isWebSocketsReq :: Wai.Request -> Bool
 isWebSocketsReq req =
     fmap CI.mk (lookup "upgrade" $ Wai.requestHeaders req) == Just "websocket"
 
---------------------------------------------------------------------------------
 -- | Upgrade a @websockets@ 'WS.ServerApp' to a @wai@ 'Wai.Application'. Uses
 -- the given backup 'Wai.Application' to handle 'Wai.Request's that are not
 -- WebSocket requests.
@@ -60,7 +58,6 @@ websocketsOr opts app backup req sendResponse =
         Nothing -> backup req sendResponse
         Just res -> sendResponse res
 
---------------------------------------------------------------------------------
 -- | Handle a single @wai@ 'Wai.Request' with the given @websockets@
 -- 'WS.ServerApp'. Returns 'Nothing' if the 'Wai.Request' is not a WebSocket
 -- request, 'Just' otherwise.
@@ -80,14 +77,12 @@ websocketsApp opts app req
     backup = Wai.responseLBS status500 [("Content-Type", "text/plain")]
                 "The web application attempted to send a WebSockets response, but WebSockets are not supported by your WAI handler."
 
---------------------------------------------------------------------------------
 getRequestHead :: Wai.Request -> WS.RequestHead
 getRequestHead req = WS.RequestHead
     (Wai.rawPathInfo req `BC.append` Wai.rawQueryString req)
     (Wai.requestHeaders req)
     (Wai.isSecure req)
 
---------------------------------------------------------------------------------
 -- | Internal function to run the WebSocket io-streams using the conduit library.
 runWebSockets :: WS.ConnectionOptions
               -> WS.RequestHead

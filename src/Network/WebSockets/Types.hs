@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 -- | Primary types
 {-# LANGUAGE DeriveDataTypeable #-}
 module Network.WebSockets.Types
@@ -17,7 +16,6 @@ module Network.WebSockets.Types
     ) where
 
 
---------------------------------------------------------------------------------
 import           Control.Exception        (Exception (..))
 import           Control.Exception        (throw, try)
 import qualified Data.ByteString          as B
@@ -31,11 +29,9 @@ import           Data.Word                (Word16)
 import           System.IO.Unsafe         (unsafePerformIO)
 
 
---------------------------------------------------------------------------------
 import           Network.WebSockets.Http
 
 
---------------------------------------------------------------------------------
 -- | The kind of message a server application typically deals with
 data Message
     = ControlMessage ControlMessage
@@ -44,7 +40,6 @@ data Message
     deriving (Eq, Show)
 
 
---------------------------------------------------------------------------------
 -- | Different control messages
 data ControlMessage
     = Close Word16 BL.ByteString
@@ -53,7 +48,6 @@ data ControlMessage
     deriving (Eq, Show)
 
 
---------------------------------------------------------------------------------
 -- | For an end-user of this library, dealing with 'Frame's would be a bit
 -- low-level. This is why define another type on top of it, which represents
 -- data for the application layer.
@@ -76,7 +70,6 @@ data DataMessage
     deriving (Eq, Show)
 
 
---------------------------------------------------------------------------------
 -- | In order to have an even more high-level API, we define a typeclass for
 -- values the user can receive from and send to the socket. A few warnings
 -- apply:
@@ -97,7 +90,6 @@ class WebSocketsData a where
     toLazyByteString   :: a -> BL.ByteString
 
 
---------------------------------------------------------------------------------
 instance WebSocketsData BL.ByteString where
     fromDataMessage (Text   bl _) = bl
     fromDataMessage (Binary bl)   = bl
@@ -106,7 +98,6 @@ instance WebSocketsData BL.ByteString where
     toLazyByteString   = id
 
 
---------------------------------------------------------------------------------
 instance WebSocketsData B.ByteString where
     fromDataMessage (Text   bl _) = fromLazyByteString bl
     fromDataMessage (Binary bl)   = fromLazyByteString bl
@@ -115,7 +106,6 @@ instance WebSocketsData B.ByteString where
     toLazyByteString   = BL.fromChunks . return
 
 
---------------------------------------------------------------------------------
 instance WebSocketsData TL.Text where
     fromDataMessage (Text   _  (Just tl)) = tl
     fromDataMessage (Text   bl Nothing)   = fromLazyByteString bl
@@ -126,7 +116,6 @@ instance WebSocketsData TL.Text where
     toLazyByteString   = TL.encodeUtf8
 
 
---------------------------------------------------------------------------------
 instance WebSocketsData T.Text where
     fromDataMessage (Text   _ (Just tl)) = T.concat (TL.toChunks tl)
     fromDataMessage (Text   bl Nothing)  = fromLazyByteString bl
@@ -136,7 +125,6 @@ instance WebSocketsData T.Text where
     toLazyByteString   = toLazyByteString . TL.fromChunks . return
 
 
---------------------------------------------------------------------------------
 -- | Various exceptions that can occur while receiving or transmitting messages
 data ConnectionException
     -- | The peer has requested that the connection be closed, and included
@@ -163,23 +151,19 @@ data ConnectionException
     deriving (Eq, Show, Typeable)
 
 
---------------------------------------------------------------------------------
 instance Exception ConnectionException
 
 
---------------------------------------------------------------------------------
 data ConnectionType = ServerConnection | ClientConnection
     deriving (Eq, Ord, Show)
 
 
---------------------------------------------------------------------------------
 -- | Replace an invalid input byte with the Unicode replacement character
 -- U+FFFD.
 decodeUtf8Lenient :: BL.ByteString -> TL.Text
 decodeUtf8Lenient = TL.decodeUtf8With TL.lenientDecode
 
 
---------------------------------------------------------------------------------
 -- | Throw an error if there is an invalid input byte.
 decodeUtf8Strict :: BL.ByteString -> Either ConnectionException TL.Text
 decodeUtf8Strict bl = unsafePerformIO $ try $

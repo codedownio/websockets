@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 import qualified Network.WebSockets.Extensions.Tests
 import qualified Network.WebSockets.Extensions.PermessageDeflate.Tests
 import qualified Network.WebSockets.Handshake.Tests
@@ -10,7 +9,6 @@ import qualified Network.WebSockets.Tests
 import           Test.Framework                              (defaultMain)
 
 
---------------------------------------------------------------------------------
 main :: IO ()
 main = defaultMain
     [ Network.WebSockets.Extensions.Tests.tests

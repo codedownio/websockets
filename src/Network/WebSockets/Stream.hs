@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 -- | Lightweight abstraction over an input/output stream.
 {-# LANGUAGE CPP #-}
 module Network.WebSockets.Stream
@@ -35,14 +34,12 @@ import qualified Network.Socket.ByteString      as SB (sendAll)
 import           Network.WebSockets.Types
 
 
---------------------------------------------------------------------------------
 -- | State of the stream
 data StreamState
     = Closed !B.ByteString  -- Remainder
     | Open   !B.ByteString  -- Buffer
 
 
---------------------------------------------------------------------------------
 -- | Lightweight abstraction over an input/output stream.
 data Stream = Stream
     { streamIn    :: IO (Maybe B.ByteString)
@@ -51,7 +48,6 @@ data Stream = Stream
     }
 
 
---------------------------------------------------------------------------------
 -- | Create a stream from a "receive" and "send" action. The following
 -- properties apply:
 --
@@ -111,7 +107,6 @@ makeStream receive send = do
             throwIO e
 
 
---------------------------------------------------------------------------------
 makeSocketStream :: S.Socket -> IO Stream
 makeSocketStream socket = makeStream receive send
   where
@@ -128,7 +123,6 @@ makeSocketStream socket = makeStream receive send
 #endif
 
 
---------------------------------------------------------------------------------
 makeEchoStream :: IO Stream
 makeEchoStream = do
     mvar <- newEmptyMVar
@@ -137,7 +131,6 @@ makeEchoStream = do
         Just bs -> forM_ (BL.toChunks bs) $ \c -> putMVar mvar (Just c)
 
 
---------------------------------------------------------------------------------
 parseBin :: Stream -> BIN.Get a -> IO (Maybe a)
 parseBin stream parser = do
     state <- readIORef (streamState stream)
@@ -202,11 +195,9 @@ parse stream parser = do
     go (Atto.Fail _ _ err) _ = throwIO (ParseException err)
 
 
---------------------------------------------------------------------------------
 write :: Stream -> BL.ByteString -> IO ()
 write stream = streamOut stream . Just
 
 
---------------------------------------------------------------------------------
 close :: Stream -> IO ()
 close stream = streamOut stream Nothing

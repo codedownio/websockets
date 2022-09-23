@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 -- | This module exposes connection internals and should only be used if you
 -- really know what you are doing.
 {-# LANGUAGE OverloadedStrings #-}
@@ -44,7 +43,6 @@ module Network.WebSockets.Connection
     ) where
 
 
---------------------------------------------------------------------------------
 import           Control.Applicative                             ((<$>))
 import           Control.Concurrent                              (forkIO,
                                                                   threadDelay)
@@ -69,7 +67,6 @@ import           Data.Word                                       (Word16)
 import           Prelude
 
 
---------------------------------------------------------------------------------
 import           Network.WebSockets.Connection.Options
 import           Network.WebSockets.Extensions                   as Extensions
 import           Network.WebSockets.Extensions.PermessageDeflate
@@ -81,7 +78,6 @@ import qualified Network.WebSockets.Stream                       as Stream
 import           Network.WebSockets.Types
 
 
---------------------------------------------------------------------------------
 -- | A new client connected to the server. We haven't accepted the connection
 -- yet, though.
 data PendingConnection = PendingConnection
@@ -97,7 +93,6 @@ data PendingConnection = PendingConnection
     }
 
 
---------------------------------------------------------------------------------
 -- | This datatype allows you to set options for 'acceptRequestWith'.  It is
 -- strongly recommended to use 'defaultAcceptRequest' and then modify the
 -- various fields, that way new fields introduced in the library do not break
@@ -112,25 +107,21 @@ data AcceptRequest = AcceptRequest
     }
 
 
---------------------------------------------------------------------------------
 defaultAcceptRequest :: AcceptRequest
 defaultAcceptRequest = AcceptRequest Nothing []
 
 
---------------------------------------------------------------------------------
 -- | Utility
 sendResponse :: PendingConnection -> Response -> IO ()
 sendResponse pc rsp = Stream.write (pendingStream pc)
     (Builder.toLazyByteString (encodeResponse rsp))
 
 
---------------------------------------------------------------------------------
 -- | Accept a pending connection, turning it into a 'Connection'.
 acceptRequest :: PendingConnection -> IO Connection
 acceptRequest pc = acceptRequestWith pc defaultAcceptRequest
 
 
---------------------------------------------------------------------------------
 -- | This function is like 'acceptRequest' but allows you to set custom options
 -- using the 'AcceptRequest' datatype.
 acceptRequestWith :: PendingConnection -> AcceptRequest -> IO Connection
@@ -197,7 +188,6 @@ acceptRequestWith pc ar = case find (flip compatible request) protocols of
         B.intercalate ", " $ concatMap headerVersions protocols)]
 
 
---------------------------------------------------------------------------------
 -- | Parameters that allow you to tweak how a request is rejected.  Please use
 -- 'defaultRejectRequest' and modify fields using record syntax so your code
 -- will not break when new fields are added.
@@ -213,7 +203,6 @@ data RejectRequest = RejectRequest
     }
 
 
---------------------------------------------------------------------------------
 defaultRejectRequest :: RejectRequest
 defaultRejectRequest = RejectRequest
     { rejectCode    = 400
@@ -223,7 +212,6 @@ defaultRejectRequest = RejectRequest
     }
 
 
---------------------------------------------------------------------------------
 rejectRequestWith
     :: PendingConnection  -- ^ Connection to reject
     -> RejectRequest      -- ^ Params on how to reject the request
@@ -237,7 +225,6 @@ rejectRequestWith pc reject = sendResponse pc $ Response
     (rejectBody reject)
 
 
---------------------------------------------------------------------------------
 rejectRequest
     :: PendingConnection  -- ^ Connection to reject
     -> B.ByteString       -- ^ Rejection response body
@@ -246,7 +233,6 @@ rejectRequest pc body = rejectRequestWith pc
     defaultRejectRequest {rejectBody = body}
 
 
---------------------------------------------------------------------------------
 data Connection = Connection
     { connectionOptions   :: !ConnectionOptions
     , connectionType      :: !ConnectionType
@@ -262,14 +248,12 @@ data Connection = Connection
     }
 
 
---------------------------------------------------------------------------------
 receive :: Connection -> IO Message
 receive conn = connectionParse conn >>= \case
   Nothing  -> throwIO (ConnectionClosed "Got Nothing in receive")
   Just msg -> return msg
 
 
---------------------------------------------------------------------------------
 -- | Receive an application message. Automatically respond to control messages.
 --
 -- When the peer sends a close control message, an exception of type 'CloseRequest'
@@ -298,17 +282,14 @@ receiveDataMessage conn = do
                 receiveDataMessage conn
 
 
---------------------------------------------------------------------------------
 -- | Receive a message, converting it to whatever format is needed.
 receiveData :: WebSocketsData a => Connection -> IO a
 receiveData conn = fromDataMessage <$> receiveDataMessage conn
 
 
---------------------------------------------------------------------------------
 send :: Connection -> Message -> IO ()
 send conn = sendAll conn . return
 
---------------------------------------------------------------------------------
 sendAll :: Connection -> [Message] -> IO ()
 sendAll _    []   = return ()
 sendAll conn msgs = do
@@ -319,26 +300,22 @@ sendAll conn msgs = do
     isCloseMessage (ControlMessage (Close _ _)) = True
     isCloseMessage _                            = False
 
---------------------------------------------------------------------------------
 -- | Send a 'DataMessage'.  This allows you send both human-readable text and
 -- binary data.  This is a slightly more low-level interface than 'sendTextData'
 -- or 'sendBinaryData'.
 sendDataMessage :: Connection -> DataMessage -> IO ()
 sendDataMessage conn = sendDataMessages conn . return
 
---------------------------------------------------------------------------------
 -- | Send a collection of 'DataMessage's.  This is more efficient than calling
 -- 'sendDataMessage' many times.
 sendDataMessages :: Connection -> [DataMessage] -> IO ()
 sendDataMessages conn = sendAll conn . map (DataMessage False False False)
 
---------------------------------------------------------------------------------
 -- | Send a textual message.  The message will be encoded as UTF-8.  This should
 -- be the default choice for human-readable text-based protocols such as JSON.
 sendTextData :: WebSocketsData a => Connection -> a -> IO ()
 sendTextData conn = sendTextDatas conn . return
 
---------------------------------------------------------------------------------
 -- | Send a number of textual messages.  This is more efficient than calling
 -- 'sendTextData' many times.
 sendTextDatas :: WebSocketsData a => Connection -> [a] -> IO ()
@@ -346,19 +323,16 @@ sendTextDatas conn =
     sendDataMessages conn .
     map (\x -> Text (toLazyByteString x) Nothing)
 
---------------------------------------------------------------------------------
 -- | Send a binary message.  This is useful for sending binary blobs, e.g.
 -- images, data encoded with MessagePack, images...
 sendBinaryData :: WebSocketsData a => Connection -> a -> IO ()
 sendBinaryData conn = sendBinaryDatas conn . return
 
---------------------------------------------------------------------------------
 -- | Send a number of binary messages.  This is more efficient than calling
 -- 'sendBinaryData' many times.
 sendBinaryDatas :: WebSocketsData a => Connection -> [a] -> IO ()
 sendBinaryDatas conn = sendDataMessages conn . map (Binary . toLazyByteString)
 
---------------------------------------------------------------------------------
 -- | Send a friendly close message.  Note that after sending this message,
 -- you should still continue calling 'receiveDataMessage' to process any
 -- in-flight messages.  The peer will eventually respond with a close control
@@ -369,7 +343,6 @@ sendClose :: WebSocketsData a => Connection -> a -> IO ()
 sendClose conn = sendCloseCode conn 1000
 
 
---------------------------------------------------------------------------------
 -- | Send a friendly close message and close code.  Similar to 'sendClose',
 -- you should continue calling 'receiveDataMessage' until you receive a
 -- 'CloseRequest' exception.
@@ -381,13 +354,11 @@ sendCloseCode conn code =
     send conn . ControlMessage . Close code . toLazyByteString
 
 
---------------------------------------------------------------------------------
 -- | Send a ping
 sendPing :: WebSocketsData a => Connection -> a -> IO ()
 sendPing conn = send conn . ControlMessage . Ping . toLazyByteString
 
 
---------------------------------------------------------------------------------
 -- | Forks a ping thread, sending a ping message every @n@ seconds over the
 -- connection.  The thread is killed when the inner IO action is finished.
 --
@@ -404,7 +375,6 @@ withPingThread conn n action app =
     Async.withAsync (pingThread conn n action) (\_ -> app)
 
 
---------------------------------------------------------------------------------
 -- | DEPRECATED: Use 'withPingThread' instead.
 --
 -- Forks a ping thread, sending a ping message every @n@ seconds over the
@@ -420,7 +390,6 @@ forkPingThread conn n = do
 {-# DEPRECATED forkPingThread "Use 'withPingThread' instead" #-}
 
 
---------------------------------------------------------------------------------
 -- | Use this if you want to run the ping thread yourself.
 --
 -- See also 'withPingThread'.

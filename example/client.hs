@@ -1,11 +1,9 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 module Main
     ( main
     ) where
 
 
---------------------------------------------------------------------------------
 import           Control.Concurrent  (forkIO)
 import           Control.Monad       (forever, unless)
 import           Control.Monad.Trans (liftIO)
@@ -16,7 +14,6 @@ import qualified Data.Text.IO        as T
 import qualified Network.WebSockets  as WS
 
 
---------------------------------------------------------------------------------
 app :: WS.ClientApp ()
 app conn = do
     putStrLn "Connected!"
@@ -35,6 +32,5 @@ app conn = do
     WS.sendClose conn ("Bye!" :: Text)
 
 
---------------------------------------------------------------------------------
 main :: IO ()
 main = withSocketsDo $ WS.runClient "echo.websocket.org" 80 "/" app

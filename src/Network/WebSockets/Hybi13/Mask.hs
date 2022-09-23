@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 -- | Masking of fragmes using a simple XOR algorithm
 {-# LANGUAGE BangPatterns             #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
@@ -14,7 +13,6 @@ module Network.WebSockets.Hybi13.Mask
     ) where
 
 
---------------------------------------------------------------------------------
 import qualified Data.ByteString.Builder       as Builder
 import qualified Data.ByteString.Builder.Extra as Builder
 import           Data.Binary.Get               (Get, getWord32host)
@@ -29,30 +27,25 @@ import           Foreign.Ptr                   (Ptr, plusPtr)
 import           System.Random                 (RandomGen, random)
 
 
---------------------------------------------------------------------------------
 foreign import ccall unsafe "_hs_mask_chunk" c_mask_chunk
     :: Word32 -> CInt -> Ptr CChar -> CSize -> Ptr Word8 -> IO ()
 
 
---------------------------------------------------------------------------------
 -- | A mask is sequence of 4 bytes.  We store this in a 'Word32' in the host's
 -- native byte ordering.
 newtype Mask = Mask {unMask :: Word32}
 
 
---------------------------------------------------------------------------------
 -- | Parse a mask.
 parseMask :: Get Mask
 parseMask = fmap Mask getWord32host
 
 
---------------------------------------------------------------------------------
 -- | Encode a mask
 encodeMask :: Mask -> Builder.Builder
 encodeMask = Builder.word32Host . unMask
 
 
---------------------------------------------------------------------------------
 -- | Create a random mask
 randomMask :: forall g. RandomGen g => g -> (Mask, g)
 randomMask gen = (Mask int, gen')
@@ -60,7 +53,6 @@ randomMask gen = (Mask int, gen')
     (!int, !gen') = random gen :: (Word32, g)
 
 
---------------------------------------------------------------------------------
 -- | Mask a lazy bytestring.  Uses 'c_mask_chunk' under the hood.
 maskPayload :: Maybe Mask -> BL.ByteString -> BL.ByteString
 maskPayload Nothing            = id

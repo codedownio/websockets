@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Network.WebSockets.Tests
@@ -6,7 +5,6 @@ module Network.WebSockets.Tests
     ) where
 
 
---------------------------------------------------------------------------------
 import qualified Data.ByteString.Builder               as Builder
 import           Control.Applicative                   ((<$>))
 import           Control.Concurrent                    (forkIO)
@@ -35,7 +33,6 @@ import qualified Test.QuickCheck.Monadic               as QC
 import           Prelude
 
 
---------------------------------------------------------------------------------
 tests :: Test
 tests = testGroup "Network.WebSockets.Test"
     [ testProperty "simple encode/decode Hybi13" (testSimpleEncodeDecode Hybi13)
@@ -45,7 +42,6 @@ tests = testGroup "Network.WebSockets.Test"
     , testFramePayloadSizeLimit
     ]
 
---------------------------------------------------------------------------------
 testSimpleEncodeDecode :: Protocol -> Property
 testSimpleEncodeDecode protocol = QC.monadicIO $
     QC.forAllM QC.arbitrary $ \msgs -> QC.run $ do
@@ -58,7 +54,6 @@ testSimpleEncodeDecode protocol = QC.monadicIO $
         msgs @=? msgs'
 
 
---------------------------------------------------------------------------------
 testFragmentedHybi13 :: Property
 testFragmentedHybi13 = QC.monadicIO $
     QC.forAllM QC.arbitrary $ \fragmented -> QC.run $ do
@@ -90,7 +85,6 @@ testFragmentedHybi13 = QC.monadicIO $
             Right (Just msg)       -> (msg :) <$> parseAll parse
             Right Nothing          -> return []
 
---------------------------------------------------------------------------------
 testRfc_6455_5_5_1 :: Test
 testRfc_6455_5_5_1 =
     testCase "RFC 6455, 5.5: Frame encoder shall truncate control frame payload to 125 bytes" $ do
@@ -106,7 +100,6 @@ testRfc_6455_5_5_1 =
             = Builder.toLazyByteString
             $ Hybi13.encodeFrame Nothing (Frame True False False False ft payload256)
 
---------------------------------------------------------------------------------
 testRfc_6455_5_5_2 :: Test
 testRfc_6455_5_5_2 =
     testCase "RFC 6455, 5.5: Frame decoder shall fail if control frame payload length > 125 bytes" $
@@ -143,7 +136,6 @@ testFramePayloadSizeLimit = testGroup "FramePayloadSizeLimit Hybi13"
         Frame True False False False BinaryFrame (BL.replicate n 20)
 
 
---------------------------------------------------------------------------------
 instance Arbitrary Message where
     arbitrary = QC.oneof
         [ do
@@ -161,12 +153,10 @@ instance Arbitrary Message where
         ]
 
 
---------------------------------------------------------------------------------
 data FragmentedMessage = FragmentedMessage Message [Frame]
     deriving (Show)
 
 
---------------------------------------------------------------------------------
 instance Arbitrary FragmentedMessage where
     arbitrary = do
         -- Pick a frametype and a corresponding random payload
@@ -197,7 +187,6 @@ instance Arbitrary FragmentedMessage where
             ]
 
 
---------------------------------------------------------------------------------
 arbitraryFragmentation :: BL.ByteString -> Gen [BL.ByteString]
 arbitraryFragmentation bs = arbitraryFragmentation' bs
   where
@@ -213,7 +202,6 @@ arbitraryFragmentation bs = arbitraryFragmentation' bs
             _  -> (l :) <$> arbitraryFragmentation' r
 
 
---------------------------------------------------------------------------------
 arbitraryInterleave :: Gen a -> [a] -> Gen [a]
 arbitraryInterleave sep xs = fmap concat $ sequence $
     [sep'] ++ intersperse sep' [return [x] | x <- xs] ++ [sep']

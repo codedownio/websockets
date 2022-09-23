@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE Arrows              #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -6,12 +5,10 @@
 module Main where
 
 
---------------------------------------------------------------------------------
 import           Hakyll
 import           System.FilePath   (joinPath, splitFileName, splitPath, (</>))
 
 
---------------------------------------------------------------------------------
 pageCompiler :: Compiler (Item String)
 pageCompiler =
     pandocCompiler                                                   >>=
@@ -19,7 +16,6 @@ pageCompiler =
     relativizeUrls
 
 
---------------------------------------------------------------------------------
 main :: IO ()
 main = hakyllWith config $ do
     match "README.md" $ do

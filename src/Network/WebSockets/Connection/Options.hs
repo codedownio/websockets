@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP #-}
---------------------------------------------------------------------------------
 module Network.WebSockets.Connection.Options
     ( ConnectionOptions (..)
     , defaultConnectionOptions
@@ -13,13 +12,11 @@ module Network.WebSockets.Connection.Options
     ) where
 
 
---------------------------------------------------------------------------------
 import           Data.Int    (Int64)
 import           Data.Monoid (Monoid (..))
 import           Prelude
 
 
---------------------------------------------------------------------------------
 -- | Set options for a 'Connection'.  Please do not use this constructor
 -- directly, but rather use 'defaultConnectionOptions' and then set the fields
 -- you want, e.g.:
@@ -53,7 +50,6 @@ data ConnectionOptions = ConnectionOptions
     }
 
 
---------------------------------------------------------------------------------
 -- | The default connection options:
 --
 -- * Nothing happens when a pong is received.
@@ -69,14 +65,12 @@ defaultConnectionOptions = ConnectionOptions
     }
 
 
---------------------------------------------------------------------------------
 data CompressionOptions
     = NoCompression
     | PermessageDeflateCompression PermessageDeflate
     deriving (Eq, Show)
 
 
---------------------------------------------------------------------------------
 -- | Four extension parameters are defined for "permessage-deflate" to
 -- help endpoints manage per-connection resource usage.
 --
@@ -93,12 +87,10 @@ data PermessageDeflate = PermessageDeflate
     } deriving (Eq, Show)
 
 
---------------------------------------------------------------------------------
 defaultPermessageDeflate :: PermessageDeflate
 defaultPermessageDeflate = PermessageDeflate False False 15 15 8
 
 
---------------------------------------------------------------------------------
 -- | A size limit, in bytes.  The 'Monoid' instance takes the minimum limit.
 data SizeLimit
     = NoSizeLimit
@@ -106,7 +98,6 @@ data SizeLimit
     deriving (Eq, Show)
 
 
---------------------------------------------------------------------------------
 instance Monoid SizeLimit where
     mempty = NoSizeLimit
 
@@ -121,7 +112,6 @@ instance Semigroup SizeLimit where
     (<>)    (SizeLimit x) (SizeLimit y) = SizeLimit (min x y)
 #endif
 
---------------------------------------------------------------------------------
 atMostSizeLimit :: Int64 -> SizeLimit -> Bool
 atMostSizeLimit _ NoSizeLimit   = True
 atMostSizeLimit s (SizeLimit l) = s <= l

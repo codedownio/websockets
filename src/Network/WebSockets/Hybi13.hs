@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Network.WebSockets.Hybi13
@@ -16,7 +15,6 @@ module Network.WebSockets.Hybi13
     ) where
 
 
---------------------------------------------------------------------------------
 import qualified Data.ByteString.Builder               as B
 import           Control.Applicative                   (pure, (<$>))
 import           Control.Arrow                         (first)
@@ -41,7 +39,6 @@ import           System.Entropy                        as R
 import           System.Random                         (RandomGen, newStdGen)
 
 
---------------------------------------------------------------------------------
 import           Network.WebSockets.Connection.Options
 import           Network.WebSockets.Http
 import           Network.WebSockets.Hybi13.Demultiplex
@@ -51,12 +48,10 @@ import qualified Network.WebSockets.Stream             as Stream
 import           Network.WebSockets.Types
 
 
---------------------------------------------------------------------------------
 headerVersions :: [ByteString]
 headerVersions = ["13"]
 
 
---------------------------------------------------------------------------------
 finishRequest :: RequestHead
               -> Headers
               -> Either HandshakeException Response
@@ -67,7 +62,6 @@ finishRequest reqHttp headers = do
     return $ response101 (("Sec-WebSocket-Accept", encoded):headers) ""
 
 
---------------------------------------------------------------------------------
 finishResponse :: RequestHead
                -> ResponseHead
                -> Either HandshakeException Response
@@ -90,7 +84,6 @@ finishResponse request response = do
     return $ Response response ""
 
 
---------------------------------------------------------------------------------
 encodeMessage :: RandomGen g => ConnectionType -> g -> Message -> (g, B.Builder)
 encodeMessage conType gen msg = (gen', builder)
   where
@@ -107,7 +100,6 @@ encodeMessage conType gen msg = (gen', builder)
         (DataMessage rsv1 rsv2 rsv3 (Binary pl)) -> Frame True rsv1 rsv2 rsv3 BinaryFrame pl
 
 
---------------------------------------------------------------------------------
 encodeMessages
     :: ConnectionType
     -> Stream
@@ -120,7 +112,6 @@ encodeMessages conType stream = do
         Stream.write stream (B.toLazyByteString $ mconcat builders)
 
 
---------------------------------------------------------------------------------
 encodeFrame :: Maybe Mask -> Frame -> B.Builder
 encodeFrame mask f = B.word8 byte0 `mappend`
     B.word8 byte1 `mappend` len `mappend` maskbytes `mappend`
@@ -158,7 +149,6 @@ encodeFrame mask f = B.word8 byte0 `mappend`
         | otherwise      = (127, B.word64BE (fromIntegral len'))
 
 
---------------------------------------------------------------------------------
 decodeMessages
     :: SizeLimit
     -> SizeLimit
@@ -181,7 +171,6 @@ decodeMessages frameLimit messageLimit stream = do
                     DemultiplexSuccess  msg -> return (Just msg)
 
 
---------------------------------------------------------------------------------
 -- | Parse a frame
 parseFrame :: SizeLimit -> Get Frame
 parseFrame frameSizeLimit = do
@@ -226,7 +215,6 @@ parseFrame frameSizeLimit = do
           | len > 125 = fail "Control Frames must not carry payload > 125 bytes!"
           | otherwise = pure ()
 
---------------------------------------------------------------------------------
 hashKey :: ByteString -> ByteString
 hashKey key = unlazy $ bytestringDigest $ sha1 $ lazy $ key `mappend` guid
   where
@@ -235,7 +223,6 @@ hashKey key = unlazy $ bytestringDigest $ sha1 $ lazy $ key `mappend` guid
     unlazy = mconcat . BL.toChunks
 
 
---------------------------------------------------------------------------------
 createRequest :: ByteString
               -> ByteString
               -> Bool

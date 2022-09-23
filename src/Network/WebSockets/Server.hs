@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 -- | This provides a simple stand-alone server for 'WebSockets' applications.
 -- Note that in production you want to use a real webserver such as snap or
 -- warp.
@@ -18,7 +17,6 @@ module Network.WebSockets.Server
     ) where
 
 
---------------------------------------------------------------------------------
 import           Control.Concurrent            (threadDelay)
 import qualified Control.Concurrent.Async      as Async
 import           Control.Exception             (Exception, allowInterrupt,
@@ -32,20 +30,17 @@ import qualified Network.Socket                as S
 import qualified System.Clock                  as Clock
 
 
---------------------------------------------------------------------------------
 import           Network.WebSockets.Connection
 import           Network.WebSockets.Http
 import qualified Network.WebSockets.Stream     as Stream
 import           Network.WebSockets.Types
 
 
---------------------------------------------------------------------------------
 -- | WebSockets application that can be ran by a server. Once this 'IO' action
 -- finishes, the underlying socket is closed automatically.
 type ServerApp = PendingConnection -> IO ()
 
 
---------------------------------------------------------------------------------
 -- | Provides a simple server. This function blocks forever.  Note that this
 -- is merely provided for quick-and-dirty or internal applications, but for real
 -- applications, you should use a real server.
@@ -69,7 +64,6 @@ runServer :: String     -- ^ Address to bind
 runServer host port app = runServerWith host port defaultConnectionOptions app
 
 
---------------------------------------------------------------------------------
 -- | A version of 'runServer' which allows you to customize some options.
 runServerWith :: String -> Int -> ConnectionOptions -> ServerApp -> IO ()
 runServerWith host port opts = runServerWithOptions defaultServerOptions
@@ -80,7 +74,6 @@ runServerWith host port opts = runServerWithOptions defaultServerOptions
 {-# DEPRECATED runServerWith "Use 'runServerWithOptions' instead" #-}
 
 
---------------------------------------------------------------------------------
 data ServerOptions = ServerOptions
     { serverHost              :: String
     , serverPort              :: Int
@@ -92,7 +85,6 @@ data ServerOptions = ServerOptions
     }
 
 
---------------------------------------------------------------------------------
 defaultServerOptions :: ServerOptions
 defaultServerOptions = ServerOptions
     { serverHost              = "127.0.0.1"
@@ -102,7 +94,6 @@ defaultServerOptions = ServerOptions
     }
 
 
---------------------------------------------------------------------------------
 -- | Customizable version of 'runServer'.  Never returns until killed.
 --
 -- Please use the 'defaultServerOptions' combined with record updates to set the
@@ -165,7 +156,6 @@ runServerWithOptions opts app = S.withSocketsDo $
             _ -> Async.cancelWith appAsync PongTimeout
 
 
---------------------------------------------------------------------------------
 -- | Create a standardized socket on which you can listen for incomming
 -- connections. Should only be used for a quick and dirty solution! Should be
 -- preceded by the call 'Network.Socket.withSocketsDo'.
@@ -186,7 +176,6 @@ makeListenSocket host port = do
     hints = S.defaultHints { S.addrSocketType = S.Stream }
 
 
---------------------------------------------------------------------------------
 runApp :: Socket
        -> ConnectionOptions
        -> ServerApp
@@ -198,7 +187,6 @@ runApp socket opts app =
         app
 
 
---------------------------------------------------------------------------------
 -- | Turns a socket, connected to some client, into a 'PendingConnection'. The
 -- 'PendingConnection' should be closed using 'Stream.close' later.
 makePendingConnection
@@ -225,11 +213,9 @@ makePendingConnectionFromStream stream opts = do
             }
 
 
---------------------------------------------------------------------------------
 -- | Internally used exception type used to kill connections if there
 -- is a pong timeout.
 data PongTimeout = PongTimeout deriving Show
 
 
---------------------------------------------------------------------------------
 instance Exception PongTimeout

@@ -1,4 +1,3 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Network.WebSockets.Mask.Tests
@@ -6,7 +5,6 @@ module Network.WebSockets.Mask.Tests
     ) where
 
 
---------------------------------------------------------------------------------
 import qualified Data.Binary.Get                      as Get
 import           Data.Bits                            (xor)
 import qualified Data.ByteString                      as B
@@ -18,7 +16,6 @@ import           Test.QuickCheck                      (Arbitrary (..), (===))
 import qualified Test.QuickCheck                      as QC
 
 
---------------------------------------------------------------------------------
 import           Network.WebSockets.Tests.Util
 
 tests :: Test

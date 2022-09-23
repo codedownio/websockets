@@ -1,18 +1,15 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 module Network.WebSockets.Extensions.Tests
     ( tests
     ) where
 
 
---------------------------------------------------------------------------------
 import           Network.WebSockets.Extensions
 import           Test.Framework                 (Test, testGroup)
 import           Test.Framework.Providers.HUnit (testCase)
 import           Test.HUnit                     ((@?=))
 
 
---------------------------------------------------------------------------------
 tests :: Test
 tests = testGroup "Network.WebSockets.Extensions.Tests"
     [ testCase "parseExtensionDescriptions 01" $ do

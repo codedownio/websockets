@@ -1,11 +1,9 @@
---------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 module Network.WebSockets.Hybi13.Demultiplex.Tests
     ( tests
     ) where
 
 
---------------------------------------------------------------------------------
 import           Control.Applicative                   ((<$>))
 import qualified Data.ByteString.Lazy                  as BL
 import           Network.WebSockets
@@ -16,14 +14,12 @@ import           Test.Framework.Providers.HUnit        (testCase)
 import           Test.HUnit                            (Assertion, (@=?))
 
 
---------------------------------------------------------------------------------
 tests :: Test
 tests = testGroup "Network.WebSockets.Hybi13.Demultiplex.Tests"
     [ testMessageDataSizeLimit
     ]
 
 
---------------------------------------------------------------------------------
 testMessageDataSizeLimit :: Test
 testMessageDataSizeLimit = testGroup "testMessageDataSizeLimit Hybi13"
     [ testCase "OK 1" $
@@ -58,7 +54,6 @@ testMessageDataSizeLimit = testGroup "testMessageDataSizeLimit Hybi13"
     assertLeft (Right _) = fail "Expecting test to fail"
 
 
---------------------------------------------------------------------------------
 testDemultiplex
     :: SizeLimit
     -> [Frame]
