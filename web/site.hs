@@ -1,12 +1,11 @@
-{-# LANGUAGE Arrows              #-}
-{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
+
 module Main where
 
-
-import           Hakyll
-import           System.FilePath   (joinPath, splitFileName, splitPath, (</>))
+import Hakyll
+import System.FilePath
 
 
 pageCompiler :: Compiler (Item String)
