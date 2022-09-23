@@ -8,9 +8,11 @@ module Network.WebSockets.Extensions (
   , Extension (..)
   ) where
 
+import Data.Text
 import Network.WebSockets.Extensions.Description
 import Network.WebSockets.Http
 import Network.WebSockets.Types
+
 
 type NegotiateExtension = ExtensionDescriptions -> Either String Extension
 
@@ -20,6 +22,6 @@ type NegotiateExtension = ExtensionDescriptions -> Either String Extension
 -- This type is very likely to change as other extensions are introduced.
 data Extension = Extension {
   extHeaders :: Headers
-  , extParse   :: IO (Maybe Message) -> IO (IO (Maybe Message))
-  , extWrite   :: ([Message] -> IO ()) -> IO ([Message] -> IO ())
+  , extParse :: IO (Either Text Message) -> IO (IO (Either Text Message))
+  , extWrite :: ([Message] -> IO ()) -> IO ([Message] -> IO ())
   }

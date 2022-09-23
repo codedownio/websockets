@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE TupleSections     #-}
+{-# LANGUAGE RecordWildCards #-}
+
 module Network.WebSockets.Extensions.PermessageDeflate (
   defaultPermessageDeflate
   , PermessageDeflate(..)
@@ -10,7 +10,6 @@ module Network.WebSockets.Extensions.PermessageDeflate (
   , makeMessageInflater
   , makeMessageDeflater
   ) where
-
 
 import Control.Exception
 import Control.Monad

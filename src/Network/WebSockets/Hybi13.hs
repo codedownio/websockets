@@ -28,6 +28,7 @@ import Data.ByteString.Char8()
 import qualified Data.ByteString.Lazy as BL
 import Data.Digest.Pure.SHA (bytestringDigest, sha1)
 import Data.IORef
+import Data.Text (Text)
 import Data.Tuple (swap)
 import Network.WebSockets.Connection.Options
 import Network.WebSockets.Http
@@ -141,26 +142,20 @@ encodeFrame mask f = B.word8 byte0 `mappend`
         | otherwise      = (127, B.word64BE (fromIntegral len'))
 
 
-decodeMessages
-    :: SizeLimit
-    -> SizeLimit
-    -> Stream
-    -> IO (IO (Maybe Message))
+decodeMessages :: SizeLimit -> SizeLimit -> Stream -> IO (IO (Either Text Message))
 decodeMessages frameLimit messageLimit stream = do
     dmRef <- newIORef emptyDemultiplexState
     return $ go dmRef
   where
-    go dmRef = do
-        mbFrame <- Stream.parseBin stream (parseFrame frameLimit)
-        case mbFrame of
-            Nothing    -> return Nothing
-            Just frame -> do
-                demultiplexResult <- atomicModifyIORef' dmRef $
-                    \s -> swap $ demultiplex messageLimit s frame
-                case demultiplexResult of
-                    DemultiplexError err    -> throwIO err
-                    DemultiplexContinue     -> go dmRef
-                    DemultiplexSuccess  msg -> return (Just msg)
+    go dmRef = Stream.parseBin stream (parseFrame frameLimit) >>= \case
+      Nothing    -> return (Left "Got empty frame.")
+      Just frame -> do
+          demultiplexResult <- atomicModifyIORef' dmRef $
+              \s -> swap $ demultiplex messageLimit s frame
+          case demultiplexResult of
+              DemultiplexError err    -> throwIO err
+              DemultiplexContinue     -> go dmRef
+              DemultiplexSuccess  msg -> return $ Right msg
 
 
 -- | Parse a frame

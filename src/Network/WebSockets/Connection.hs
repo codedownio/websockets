@@ -1,6 +1,8 @@
 -- | This module exposes connection internals and should only be used if you
 -- really know what you are doing.
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Avoid lambda" #-}
 module Network.WebSockets.Connection (
   PendingConnection (..)
   , acceptRequest
@@ -32,7 +34,6 @@ module Network.WebSockets.Connection (
   , sendPing
 
   , withPingThread
-  , forkPingThread
   , pingThread
 
   , CompressionOptions (..)
@@ -69,31 +70,31 @@ import Prelude
 
 -- | A new client connected to the server. We haven't accepted the connection
 -- yet, though.
-data PendingConnection = PendingConnection
-    { pendingOptions  :: !ConnectionOptions
-    -- ^ Options, passed as-is to the 'Connection'
-    , pendingRequest  :: !RequestHead
-    -- ^ Useful for e.g. inspecting the request path.
-    , pendingOnAccept :: !(Connection -> IO ())
-    -- ^ One-shot callback fired when a connection is accepted, i.e., *after*
-    -- the accepting response is sent to the client.
-    , pendingStream   :: !Stream
-    -- ^ Input/output stream
-    }
+data PendingConnection = PendingConnection {
+  pendingOptions  :: !ConnectionOptions
+  -- ^ Options, passed as-is to the 'Connection'
+  , pendingRequest  :: !RequestHead
+  -- ^ Useful for e.g. inspecting the request path.
+  , pendingOnAccept :: !(Connection -> IO ())
+  -- ^ One-shot callback fired when a connection is accepted, i.e., *after*
+  -- the accepting response is sent to the client.
+  , pendingStream   :: !Stream
+  -- ^ Input/output stream
+  }
 
 
 -- | This datatype allows you to set options for 'acceptRequestWith'.  It is
 -- strongly recommended to use 'defaultAcceptRequest' and then modify the
 -- various fields, that way new fields introduced in the library do not break
 -- your code.
-data AcceptRequest = AcceptRequest
-    { acceptSubprotocol :: !(Maybe B.ByteString)
-    -- ^ The subprotocol to speak with the client.  If 'pendingSubprotcols' is
-    -- non-empty, 'acceptSubprotocol' must be one of the subprotocols from the
-    -- list.
-    , acceptHeaders     :: !Headers
-    -- ^ Extra headers to send with the response.
-    }
+data AcceptRequest = AcceptRequest {
+  acceptSubprotocol :: !(Maybe B.ByteString)
+  -- ^ The subprotocol to speak with the client.  If 'pendingSubprotcols' is
+  -- non-empty, 'acceptSubprotocol' must be one of the subprotocols from the
+  -- list.
+  , acceptHeaders     :: !Headers
+  -- ^ Extra headers to send with the response.
+  }
 
 
 defaultAcceptRequest :: AcceptRequest
@@ -155,18 +156,18 @@ acceptRequestWith pc ar = case find (flip compatible request) protocols of
             (pendingStream pc)
         writeRaw <- encodeMessages protocol ServerConnection (pendingStream pc)
 
-        write <- foldM (\x ext -> extWrite ext x) writeRaw exts
-        parse <- foldM (\x ext -> extParse ext x) parseRaw exts
+        write <- foldM (flip extWrite) writeRaw exts
+        parse <- foldM (flip extParse) parseRaw exts
 
         sentRef    <- newIORef False
-        let connection = Connection
-                { connectionOptions   = options
-                , connectionType      = ServerConnection
-                , connectionProtocol  = protocol
-                , connectionParse     = parse
-                , connectionWrite     = write
-                , connectionSentClose = sentRef
-                }
+        let connection = Connection {
+              connectionOptions = options
+              , connectionType = ServerConnection
+              , connectionProtocol = protocol
+              , connectionParse = parse
+              , connectionWrite = write
+              , connectionSentClose = sentRef
+              }
 
         pendingOnAccept pc connection
         return connection
@@ -180,16 +181,12 @@ acceptRequestWith pc ar = case find (flip compatible request) protocols of
 -- | Parameters that allow you to tweak how a request is rejected.  Please use
 -- 'defaultRejectRequest' and modify fields using record syntax so your code
 -- will not break when new fields are added.
-data RejectRequest = RejectRequest
-    { -- | The status code, 400 by default.
-      rejectCode    :: !Int
-    , -- | The message, "Bad Request" by default
-      rejectMessage :: !B.ByteString
-    , -- | Extra headers to be sent with the response.
-      rejectHeaders :: Headers
-    , -- | Reponse body of the rejection.
-      rejectBody    :: !B.ByteString
-    }
+data RejectRequest = RejectRequest {
+  rejectCode    :: !Int -- ^ The status code, 400 by default.
+  , rejectMessage :: !B.ByteString -- ^ The message, "Bad Request" by default
+  , rejectHeaders :: Headers -- ^ Extra headers to be sent with the response.
+  , rejectBody    :: !B.ByteString -- ^ Reponse body of the rejection.
+  }
 
 
 defaultRejectRequest :: RejectRequest
@@ -222,19 +219,19 @@ rejectRequest pc body = rejectRequestWith pc
     defaultRejectRequest {rejectBody = body}
 
 
-data Connection = Connection
-    { connectionOptions   :: !ConnectionOptions
-    , connectionType      :: !ConnectionType
-    , connectionProtocol  :: !Protocol
-    , connectionParse     :: !(IO (Maybe Message))
-    , connectionWrite     :: !([Message] -> IO ())
-    , connectionSentClose :: !(IORef Bool)
-    -- ^ According to the RFC, both the client and the server MUST send
-    -- a close control message to each other.  Either party can initiate
-    -- the first close message but then the other party must respond.  Finally,
-    -- the server is in charge of closing the TCP connection.  This IORef tracks
-    -- if we have sent a close message and are waiting for the peer to respond.
-    }
+data Connection = Connection {
+  connectionOptions   :: !ConnectionOptions
+  , connectionType      :: !ConnectionType
+  , connectionProtocol  :: !Protocol
+  , connectionParse     :: !(IO (Either T.Text Message))
+  , connectionWrite     :: !([Message] -> IO ())
+  , connectionSentClose :: !(IORef Bool)
+  -- ^ According to the RFC, both the client and the server MUST send
+  -- a close control message to each other.  Either party can initiate
+  -- the first close message but then the other party must respond.  Finally,
+  -- the server is in charge of closing the TCP connection.  This IORef tracks
+  -- if we have sent a close message and are waiting for the peer to respond.
+  }
 
 
 receive :: Connection -> IO Message
@@ -356,27 +353,12 @@ sendPing conn = send conn . ControlMessage . Ping . toLazyByteString
 -- sending a ping every 30 seconds is a good idea.
 withPingThread
     :: Connection
-    -> Int    -- ^ Second interval in which pings should be sent.
-    -> IO ()  -- ^ Repeat this after sending a ping.
-    -> IO a   -- ^ Application to wrap with a ping thread.
-    -> IO a   -- ^ Executes application and kills ping thread when done.
+    -> Int -- ^ Second interval in which pings should be sent.
+    -> IO () -- ^ Repeat this after sending a ping.
+    -> IO a -- ^ Application to wrap with a ping thread.
+    -> IO a -- ^ Executes application and kills ping thread when done.
 withPingThread conn n action app =
     Async.withAsync (pingThread conn n action) (\_ -> app)
-
-
--- | DEPRECATED: Use 'withPingThread' instead.
---
--- Forks a ping thread, sending a ping message every @n@ seconds over the
--- connection.  The thread dies silently if the connection crashes or is closed.
---
--- This is useful to keep idle connections open through proxies and whatnot.
--- Many (but not all) proxies have a 60 second default timeout, so based on that
--- sending a ping every 30 seconds is a good idea.
-forkPingThread :: Connection -> Int -> IO ()
-forkPingThread conn n = do
-    _ <- forkIO $ pingThread conn n (return ())
-    return ()
-{-# DEPRECATED forkPingThread "Use 'withPingThread' instead" #-}
 
 
 -- | Use this if you want to run the ping thread yourself.
