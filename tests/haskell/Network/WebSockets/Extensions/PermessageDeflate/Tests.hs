@@ -1,19 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Network.WebSockets.Extensions.PermessageDeflate.Tests
-    ( tests
-    ) where
 
+module Network.WebSockets.Extensions.PermessageDeflate.Tests (tests) where
 
-import           Control.Exception                               (try)
-import qualified Data.ByteString.Lazy                            as BL
-import           Network.WebSockets.Extensions.PermessageDeflate
-import           Network.WebSockets.Types
-import           Network.WebSockets.Connection.Options
-import           Test.Framework                                  (Test,
-                                                                  testGroup)
-import           Test.Framework.Providers.HUnit                  (testCase)
-import           Test.HUnit                                      (Assertion,
-                                                                  (@?=))
+import Control.Exception
+import qualified Data.ByteString.Lazy as BL
+import Network.WebSockets.Connection.Options
+import Network.WebSockets.Extensions.PermessageDeflate
+import Network.WebSockets.Types
+import Test.Framework (Test, testGroup)
+import Test.Framework.Providers.HUnit (testCase)
+import Test.HUnit (Assertion, (@?=))
 
 
 tests :: Test

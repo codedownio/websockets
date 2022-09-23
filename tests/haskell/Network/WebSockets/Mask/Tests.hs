@@ -1,22 +1,19 @@
 {-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Network.WebSockets.Mask.Tests
-    ( tests
-    ) where
 
+module Network.WebSockets.Mask.Tests (tests) where
 
-import qualified Data.Binary.Get                      as Get
-import           Data.Bits                            (xor)
-import qualified Data.ByteString                      as B
-import qualified Data.ByteString.Lazy                 as BL
-import           Network.WebSockets.Hybi13.Mask
-import           Test.Framework                       (Test, testGroup)
-import           Test.Framework.Providers.QuickCheck2 (testProperty)
-import           Test.QuickCheck                      (Arbitrary (..), (===))
-import qualified Test.QuickCheck                      as QC
+import qualified Data.Binary.Get as Get
+import Data.Bits (xor)
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
+import Network.WebSockets.Hybi13.Mask
+import Network.WebSockets.Tests.Util
+import Test.Framework (Test, testGroup)
+import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.QuickCheck (Arbitrary (..), (===))
+import qualified Test.QuickCheck as QC
 
-
-import           Network.WebSockets.Tests.Util
 
 tests :: Test
 tests = testGroup "Network.WebSockets.Masks.Tests"

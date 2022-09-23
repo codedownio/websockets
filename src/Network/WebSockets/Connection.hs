@@ -352,13 +352,13 @@ sendPing conn = send conn . ControlMessage . Ping . toLazyByteString
 -- Many (but not all) proxies have a 60 second default timeout, so based on that
 -- sending a ping every 30 seconds is a good idea.
 withPingThread
-    :: Connection
-    -> Int -- ^ Second interval in which pings should be sent.
-    -> IO () -- ^ Repeat this after sending a ping.
-    -> IO a -- ^ Application to wrap with a ping thread.
-    -> IO a -- ^ Executes application and kills ping thread when done.
+  :: Connection
+  -> Int -- ^ Second interval in which pings should be sent.
+  -> IO () -- ^ Repeat this after sending a ping.
+  -> IO a -- ^ Application to wrap with a ping thread.
+  -> IO a -- ^ Executes application and kills ping thread when done.
 withPingThread conn n action app =
-    Async.withAsync (pingThread conn n action) (\_ -> app)
+  Async.withAsync (pingThread conn n action) (\_ -> app)
 
 
 -- | Use this if you want to run the ping thread yourself.
@@ -366,16 +366,16 @@ withPingThread conn n action app =
 -- See also 'withPingThread'.
 pingThread :: Connection -> Int -> IO () -> IO ()
 pingThread conn n action
-    | n <= 0    = return ()
-    | otherwise = ignore `handle` go 1
+  | n <= 0    = return ()
+  | otherwise = ignore `handle` go 1
   where
     go :: Int -> IO ()
     go i = do
-        threadDelay (n * 1000 * 1000)
-        sendPing conn (T.pack $ show i)
-        action
-        go (i + 1)
+      threadDelay (n * 1000 * 1000)
+      sendPing conn (T.pack $ show i)
+      action
+      go (i + 1)
 
     ignore e = case fromException e of
-        Just async -> throwIO (async :: AsyncException)
-        Nothing    -> return ()
+      Just async -> throwIO (async :: AsyncException)
+      Nothing    -> return ()

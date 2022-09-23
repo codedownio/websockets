@@ -1,17 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Network.WebSockets.Http.Tests
-    ( tests
-    ) where
 
+module Network.WebSockets.Http.Tests (tests) where
 
-import qualified Data.Attoparsec.ByteString     as A
-import qualified Data.ByteString.Char8          as BC
-import           Test.Framework                 (Test, testGroup)
-import           Test.Framework.Providers.HUnit (testCase)
-import           Test.HUnit                     (Assertion, assert)
-
-
-import           Network.WebSockets.Http
+import qualified Data.Attoparsec.ByteString as A
+import qualified Data.ByteString.Char8 as BC
+import Network.WebSockets.Http
+import Test.Framework (Test, testGroup)
+import Test.Framework.Providers.HUnit (testCase)
+import Test.HUnit (Assertion, assert)
 
 
 tests :: Test
@@ -20,7 +16,6 @@ tests = testGroup "Network.WebSockets.Http.Tests"
     , testCase "chromium response"    chromiumResponse
     , testCase "matchbook response"   matchbookResponse
     ]
-
 
 -- | This is a specific response sent by jwebsockets which caused trouble
 jWebSocketsResponse :: Assertion
@@ -40,7 +35,6 @@ jWebSocketsResponse = assert $ case A.parseOnly decodeResponseHead input of
         , ""
         ]
 
-
 -- | This is a specific response sent by chromium which caused trouble
 chromiumResponse :: Assertion
 chromiumResponse = assert $ case A.parseOnly decodeResponseHead input of
@@ -56,7 +50,6 @@ chromiumResponse = assert $ case A.parseOnly decodeResponseHead input of
         ]
 
 -- | This is a specific response sent by Matchbook.com which caused trouble
-
 matchbookResponse :: Assertion
 matchbookResponse = assert $ case A.parseOnly decodeResponseHead input of
     Left err -> error err

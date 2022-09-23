@@ -1,31 +1,24 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Network.WebSockets.Server.Tests
-    ( tests
-    ) where
 
+module Network.WebSockets.Server.Tests (tests) where
 
-import           Control.Applicative            ((<$>), (<|>))
-import           Control.Concurrent             (forkIO, killThread,
-                                                 threadDelay)
-import           Control.Exception              (SomeException, catch, handle)
-import           Control.Monad                  (forever, replicateM, unless)
-import           Data.IORef                     (IORef, newIORef, readIORef,
-                                                 writeIORef)
-
-import qualified Data.ByteString.Lazy           as BL
-import           Data.Text                      (Text)
-import           System.Environment             (getEnvironment)
-import           Test.Framework                 (Test, testGroup)
-import           Test.Framework.Providers.HUnit (testCase)
-import           Test.HUnit                     (Assertion, assert, (@=?))
-import           Test.QuickCheck                (Arbitrary, arbitrary)
-import           Test.QuickCheck.Gen            (Gen (..))
-import           Test.QuickCheck.Random         (newQCGen)
-
-
-import           Network.WebSockets
-import           Network.WebSockets.Tests.Util
+import Control.Applicative ((<|>))
+import Control.Concurrent
+import Control.Exception hiding (assert)
+import Control.Monad
+import qualified Data.ByteString.Lazy as BL
+import Data.IORef
+import Data.Text (Text)
+import Network.WebSockets
+import Network.WebSockets.Tests.Util
+import System.Environment             (getEnvironment)
+import Test.Framework (Test, testGroup)
+import Test.Framework.Providers.HUnit (testCase)
+import Test.HUnit (Assertion, assert, (@=?))
+import Test.QuickCheck hiding (sample)
+import Test.QuickCheck.Gen (Gen (..))
+import Test.QuickCheck.Random
 
 
 tests :: Test
@@ -94,14 +87,10 @@ testOnPong = withEchoServer "127.0.0.1" 42941 "Bye" $ do
 
 
 sample :: Arbitrary a => IO [a]
-sample = do
-    gen <- newQCGen
-    return $ (unGen arbitrary) gen 512
-
+sample = unGen arbitrary <$> newQCGen <*> pure 512
 
 waitSome :: IO ()
 waitSome = threadDelay $ 200 * 1000
-
 
 -- HOLY SHIT WHAT SORT OF ATROCITY IS THIS?!?!?!
 --
@@ -114,46 +103,45 @@ waitSome = threadDelay $ 200 * 1000
 retry :: IO a -> IO a
 retry action = (\(_ :: SomeException) -> waitSome >> action) `handle` action
 
-
 withEchoServer :: String -> Int -> BL.ByteString -> IO a -> IO a
 withEchoServer host port expectedClose action = do
-    cRef <- newIORef False
-    serverThread <- forkIO $ retry $ runServer host port (\c -> server c `catch` handleClose cRef)
-    waitSome
-    result <- action
-    waitSome
-    killThread serverThread
-    closeCalled <- readIORef cRef
-    unless closeCalled $ error "Expecting the CloseRequest exception"
-    return result
+  cRef <- newIORef False
+  serverThread <- forkIO $ retry $ runServer host port (\c -> server c `catch` handleClose cRef)
+  waitSome
+  result <- action
+  waitSome
+  killThread serverThread
+  closeCalled <- readIORef cRef
+  unless closeCalled $ error "Expecting the CloseRequest exception"
+  return result
   where
     server :: ServerApp
     server pc = do
-        conn <- acceptRequest pc
-        forever $ do
-            msg <- receiveDataMessage conn
-            sendDataMessage conn msg
+      conn <- acceptRequest pc
+      forever $ do
+        msg <- receiveDataMessage conn
+        sendDataMessage conn msg
 
     handleClose :: IORef Bool -> ConnectionException -> IO ()
     handleClose cRef (CloseRequest i msg) = do
-        i @=? 1000
-        msg @=? expectedClose
-        writeIORef cRef True
-    handleClose _ ConnectionClosed =
-        error "Unexpected connection closed exception"
+      i @=? 1000
+      msg @=? expectedClose
+      writeIORef cRef True
+    handleClose _ (ConnectionClosed {}) =
+      error "Unexpected connection closed exception"
     handleClose _ (ParseException _) =
-        error "Unexpected parse exception"
+      error "Unexpected parse exception"
     handleClose _ (UnicodeException _) =
-        error "Unexpected unicode exception"
+      error "Unexpected unicode exception"
 
 
 expectCloseException :: Connection -> BL.ByteString -> IO ()
 expectCloseException conn msg = act `catch` handler
-    where
-        act = receiveDataMessage conn >> error "Expecting CloseRequest exception"
-        handler (CloseRequest i msg') = do
-            i @=? 1000
-            msg' @=? msg
-        handler ConnectionClosed = error "Unexpected connection closed"
-        handler (ParseException _) = error "Unexpected parse exception"
-        handler (UnicodeException _) = error "Unexpected unicode exception"
+  where
+    act = receiveDataMessage conn >> error "Expecting CloseRequest exception"
+    handler (CloseRequest i msg') = do
+        i @=? 1000
+        msg' @=? msg
+    handler (ConnectionClosed {}) = error "Unexpected connection closed"
+    handler (ParseException _) = error "Unexpected parse exception"
+    handler (UnicodeException _) = error "Unexpected unicode exception"

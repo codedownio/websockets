@@ -1,13 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Network.WebSockets.Extensions.Tests
-    ( tests
-    ) where
 
+module Network.WebSockets.Extensions.Tests (tests) where
 
-import           Network.WebSockets.Extensions
-import           Test.Framework                 (Test, testGroup)
-import           Test.Framework.Providers.HUnit (testCase)
-import           Test.HUnit                     ((@?=))
+import Network.WebSockets.Extensions
+import Test.Framework (Test, testGroup)
+import Test.Framework.Providers.HUnit (testCase)
+import Test.HUnit ((@?=))
 
 
 tests :: Test

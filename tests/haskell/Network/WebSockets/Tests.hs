@@ -1,36 +1,31 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Network.WebSockets.Tests
-    ( tests
-    ) where
 
+module Network.WebSockets.Tests (tests) where
 
-import qualified Data.ByteString.Builder               as Builder
-import           Control.Applicative                   ((<$>))
-import           Control.Concurrent                    (forkIO)
-import           Control.Exception                     (try)
-import           Control.Monad                         (replicateM)
-import           Data.Binary.Get                       (runGetOrFail)
-import qualified Data.ByteString.Lazy                  as BL
-import           Data.List                             (intersperse)
-import           Data.Maybe                            (catMaybes)
-import           Data.Monoid                           (mempty, mconcat)
-import           Network.WebSockets
-import qualified Network.WebSockets.Hybi13             as Hybi13
-import           Network.WebSockets.Hybi13.Demultiplex
-import           Network.WebSockets.Protocol
-import qualified Network.WebSockets.Stream             as Stream
-import           Network.WebSockets.Tests.Util
-import           Network.WebSockets.Types
-import           Test.Framework                        (Test, testGroup)
-import           Test.Framework.Providers.HUnit        (testCase)
-import           Test.Framework.Providers.QuickCheck2  (testProperty)
-import           Test.HUnit                            ((@=?))
-import           Test.QuickCheck                       (Arbitrary (..), Gen,
-                                                        Property)
-import qualified Test.QuickCheck                       as QC
-import qualified Test.QuickCheck.Monadic               as QC
-import           Prelude
+import Control.Concurrent
+import Control.Exception
+import Control.Monad
+import Data.Binary.Get (runGetOrFail)
+import qualified Data.ByteString.Builder as Builder
+import qualified Data.ByteString.Lazy as BL
+import Data.Either (rights)
+import Data.List (intersperse)
+import Network.WebSockets
+import qualified Network.WebSockets.Hybi13 as Hybi13
+import Network.WebSockets.Hybi13.Demultiplex
+import Network.WebSockets.Protocol
+import qualified Network.WebSockets.Stream as Stream
+import Network.WebSockets.Tests.Util
+import Network.WebSockets.Types
+import Prelude
+import Test.Framework (Test, testGroup)
+import Test.Framework.Providers.HUnit (testCase)
+import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.HUnit ((@=?))
+import Test.QuickCheck
+import qualified Test.QuickCheck as QC
+import qualified Test.QuickCheck.Monadic as QC
 
 
 tests :: Test
@@ -49,7 +44,7 @@ testSimpleEncodeDecode protocol = QC.monadicIO $
         parse <- decodeMessages protocol mempty mempty echo
         write <- encodeMessages protocol ClientConnection echo
         _     <- forkIO $ write msgs
-        msgs' <- catMaybes <$> replicateM (length msgs) parse
+        msgs' <- rights <$> replicateM (length msgs) parse
         Stream.close echo
         msgs @=? msgs'
 
@@ -77,13 +72,11 @@ testFragmentedHybi13 = QC.monadicIO $
     isDataMessage (ControlMessage _)    = False
     isDataMessage (DataMessage _ _ _ _) = True
 
-    parseAll parse = do
-        mbMsg <- try parse
-        case mbMsg of
-            Left  ConnectionClosed -> return []
-            Left  _                -> return []
-            Right (Just msg)       -> (msg :) <$> parseAll parse
-            Right Nothing          -> return []
+    parseAll parse = try parse >>= \case
+      Left (ConnectionClosed {}) -> return []
+      Left _ -> return []
+      Right (Right msg) -> (msg :) <$> parseAll parse
+      Right (Left _err) -> return []
 
 testRfc_6455_5_5_1 :: Test
 testRfc_6455_5_5_1 =

@@ -1,24 +1,20 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Network.WebSockets.Hybi13.Demultiplex.Tests
-    ( tests
-    ) where
 
+module Network.WebSockets.Hybi13.Demultiplex.Tests (tests) where
 
-import           Control.Applicative                   ((<$>))
-import qualified Data.ByteString.Lazy                  as BL
-import           Network.WebSockets
-import           Network.WebSockets.Hybi13.Demultiplex
-import           Prelude
-import           Test.Framework                        (Test, testGroup)
-import           Test.Framework.Providers.HUnit        (testCase)
-import           Test.HUnit                            (Assertion, (@=?))
+import qualified Data.ByteString.Lazy as BL
+import Network.WebSockets
+import Network.WebSockets.Hybi13.Demultiplex
+import Prelude
+import Test.Framework (Test, testGroup)
+import Test.Framework.Providers.HUnit (testCase)
+import Test.HUnit (Assertion, (@=?))
 
 
 tests :: Test
 tests = testGroup "Network.WebSockets.Hybi13.Demultiplex.Tests"
     [ testMessageDataSizeLimit
     ]
-
 
 testMessageDataSizeLimit :: Test
 testMessageDataSizeLimit = testGroup "testMessageDataSizeLimit Hybi13"
@@ -53,11 +49,7 @@ testMessageDataSizeLimit = testGroup "testMessageDataSizeLimit Hybi13"
     assertLeft (Left _)  = return ()
     assertLeft (Right _) = fail "Expecting test to fail"
 
-
-testDemultiplex
-    :: SizeLimit
-    -> [Frame]
-    -> Either ConnectionException [Message]
+testDemultiplex :: SizeLimit -> [Frame] -> Either ConnectionException [Message]
 testDemultiplex messageLimit = go emptyDemultiplexState
   where
     go _state0 []               = return []

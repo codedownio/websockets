@@ -1,24 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Network.WebSockets.Handshake.Tests
-    ( tests
-    ) where
 
+module Network.WebSockets.Handshake.Tests (tests) where
 
-import           Control.Concurrent             (forkIO)
-import           Control.Exception              (handle)
-import           Data.ByteString.Char8          ()
-import           Data.IORef                     (newIORef, readIORef,
-                                                 writeIORef)
-import           Data.Maybe                     (fromJust)
-import           Test.Framework                 (Test, testGroup)
-import           Test.Framework.Providers.HUnit (testCase)
-import           Test.HUnit                     (Assertion, assert, (@?=))
-
-
-import           Network.WebSockets
-import           Network.WebSockets.Connection
-import           Network.WebSockets.Http
-import qualified Network.WebSockets.Stream      as Stream
+import Control.Concurrent
+import Control.Exception hiding (assert)
+import Data.ByteString.Char8 ()
+import Data.IORef
+import Data.Maybe
+import Network.WebSockets
+import Network.WebSockets.Connection
+import Network.WebSockets.Http
+import qualified Network.WebSockets.Stream as Stream
+import Test.Framework (Test, testGroup)
+import Test.Framework.Providers.HUnit (testCase)
+import Test.HUnit (Assertion, assert, (@?=))
 
 
 tests :: Test
@@ -31,7 +26,6 @@ tests = testGroup "Network.WebSockets.Handshake.Test"
     , testCase "handshake reject with custom code"  testHandshakeRejectWithCode
     , testCase "handshake Hybi9000"                 testHandshakeHybi9000
     ]
-
 
 testHandshake :: RequestHead -> (PendingConnection -> IO a) -> IO ResponseHead
 testHandshake rq app = do
@@ -47,10 +41,8 @@ testHandshake rq app = do
   where
     nullify _ = return ()
 
-
 (!) :: Eq a => [(a, b)] -> a -> b
 assoc ! key = fromJust (lookup key assoc)
-
 
 rq13 :: RequestHead
 rq13 = RequestHead "/mychat"
@@ -63,7 +55,6 @@ rq13 = RequestHead "/mychat"
     , ("Origin", "http://example.com")
     ]
     False
-
 
 testHandshakeHybi13 :: Assertion
 testHandshakeHybi13 = do
@@ -125,14 +116,12 @@ testHandshakeHybi13WithProtoAndHeaders = do
     headers ! "Sec-WebSocket-Protocol" @?= "superchat"
     headers ! "Set-Cookie"           @?= "sid=foo"
 
-
 testHandshakeReject :: Assertion
 testHandshakeReject = do
     ResponseHead code _ _ <- testHandshake rq13 $ \pc ->
         rejectRequest pc "YOU SHALL NOT PASS"
 
     code @?= 400
-
 
 testHandshakeRejectWithCode :: Assertion
 testHandshakeRejectWithCode = do
@@ -143,7 +132,6 @@ testHandshakeRejectWithCode = do
             }
 
     code @?= 401
-
 
 -- I don't believe this one is supported yet
 rq9000 :: RequestHead
@@ -157,7 +145,6 @@ rq9000 = RequestHead "/chat"
     , ("Sec-WebSocket-Version", "9000")
     ]
     False
-
 
 testHandshakeHybi9000 :: Assertion
 testHandshakeHybi9000 = do
