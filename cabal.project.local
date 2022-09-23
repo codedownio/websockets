@@ -1,0 +1,4 @@
+ignore-project: False
+tests: True
+benchmarks: True
+test-show-details: direct
