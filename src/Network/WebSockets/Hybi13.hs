@@ -211,9 +211,9 @@ parseFrame frameSizeLimit = do
         0x00 -> return ContinuationFrame
         0x01 -> return TextFrame
         0x02 -> return BinaryFrame
-        0x08 -> enforceControlFrameRestrictions len fin >> return CloseFrame
-        0x09 -> enforceControlFrameRestrictions len fin >> return PingFrame
-        0x0a -> enforceControlFrameRestrictions len fin >> return PongFrame
+        0x08 -> enforceControlFrameRestrictions 0x08 len fin >> return CloseFrame
+        0x09 -> enforceControlFrameRestrictions 0x09 len fin >> return PingFrame
+        0x0a -> enforceControlFrameRestrictions 0x0a len fin >> return PongFrame
         _    -> fail $ "Unknown opcode: " ++ show opcode
 
     masker <- maskPayload <$> if mask then Just <$> parseMask else pure Nothing
@@ -223,9 +223,9 @@ parseFrame frameSizeLimit = do
     return $ Frame fin rsv1 rsv2 rsv3 ft (masker chunks)
 
     where
-        enforceControlFrameRestrictions len fin
-          | not fin   = fail "Control Frames must not be fragmented!"
-          | len > 125 = fail "Control Frames must not carry payload > 125 bytes!"
+        enforceControlFrameRestrictions code len fin
+          | not fin   = fail ("Control Frames must not be fragmented!: " <> show code)
+          | len > 125 = fail ("Control Frames must not carry payload > 125 bytes!: " <> show code)
           | otherwise = pure ()
 
 --------------------------------------------------------------------------------
