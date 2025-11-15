@@ -8,3 +8,5 @@ tests/coverage
 tests/haskell/TestSuite
 
 .stack-work/
+
+.direnv

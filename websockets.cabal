@@ -219,6 +219,23 @@ Executable websockets-autobahn
     text              >= 0.10   && < 2.2,
     entropy           >= 0.2.1  && < 0.5
 
+Executable websockets-pingpong-test
+  If !flag(Example)
+    Buildable: False
+
+  Hs-source-dirs:   tests/haskell
+  Main-is:          PingPongTest.hs
+  Ghc-options:      -Wall -threaded -rtsopts
+  Default-language: Haskell2010
+
+  Build-depends:
+    websockets,
+    base              >= 4.14   && < 5,
+    async             >= 2.2    && < 2.3,
+    bytestring        >= 0.9    && < 0.13,
+    text              >= 0.10   && < 2.2,
+    network           >= 2.3    && < 3.3
+
 Benchmark bench-mask
   Type:             exitcode-stdio-1.0
   Main-is:          mask.hs
