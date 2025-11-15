@@ -234,7 +234,8 @@ Executable websockets-pingpong-test
     async             >= 2.2    && < 2.3,
     bytestring        >= 0.9    && < 0.13,
     text              >= 0.10   && < 2.2,
-    network           >= 2.3    && < 3.3
+    network           >= 2.3    && < 3.3,
+    unliftio
 
 Benchmark bench-mask
   Type:             exitcode-stdio-1.0
