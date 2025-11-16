@@ -57,6 +57,7 @@ import           Control.Exception                               (AsyncException
 import           Control.Monad                                   (foldM, unless,
                                                                   when)
 import qualified Data.ByteString                                 as B
+import qualified Data.ByteString.Lazy                            as BL
 import qualified Data.ByteString.Builder                         as Builder
 import qualified Data.ByteString.Char8                           as B8
 import           Data.IORef                                      (IORef,
@@ -255,7 +256,7 @@ data Connection = Connection
     { connectionOptions   :: !ConnectionOptions
     , connectionType      :: !ConnectionType
     , connectionProtocol  :: !Protocol
-    , connectionHeartbeat :: !(MVar ())
+    , connectionHeartbeat :: !(MVar BL.ByteString)
     -- ^ This MVar is filled whenever a pong is received.  This is used by
     -- 'withPingPong' to timeout the connection if a pong is not received.
     , connectionParse     :: !(IO (Maybe Message))
@@ -299,9 +300,9 @@ receiveDataMessage conn = do
                 hasSentClose <- readIORef $ connectionSentClose conn
                 unless hasSentClose $ send conn msg
                 throwIO $ CloseRequest i closeMsg
-            Pong _    -> do
-                _ <- tryPutMVar (connectionHeartbeat conn) ()
-                connectionOnPong (connectionOptions conn)
+            Pong body -> do
+                _ <- tryPutMVar (connectionHeartbeat conn) body
+                connectionOnPong (connectionOptions conn) body
                 receiveDataMessage conn
             Ping pl   -> do
                 send conn (ControlMessage (Pong pl))
