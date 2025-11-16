@@ -1,27 +1,31 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Network.WebSockets.Connection.PingPong
     ( withPingPong
     , PingPongOptions(..)
     , PongTimeout(..)
     , defaultPingPongOptions
-    ) where 
+    ) where
 
 import Control.Concurrent.Async as Async
+import Control.Concurrent.MVar (takeMVar)
 import Control.Exception
 import Control.Monad (void)
+import qualified Data.ByteString.Lazy as BL
+import Data.Function (fix)
 import Network.WebSockets.Connection (Connection, connectionHeartbeat, pingThread)
-import Control.Concurrent.MVar (takeMVar)
 import System.Timeout (timeout)
 
 
 -- | Exception type used to kill connections if there
 -- is a pong timeout.
-data PongTimeout = PongTimeout deriving Show
+data PongTimeout = PongTimeout (Maybe BL.ByteString) deriving Show
 
 instance Exception PongTimeout
 
 
 -- | Options for ping-pong
--- 
+--
 -- Make sure that the ping interval is less than the pong timeout,
 -- for example N/2.
 data PingPongOptions = PingPongOptions {
@@ -31,7 +35,7 @@ data PingPongOptions = PingPongOptions {
 }
 
 -- | Default options for ping-pong
--- 
+--
 --   Ping every 15 seconds, timeout after 30 seconds
 defaultPingPongOptions :: PingPongOptions
 defaultPingPongOptions = PingPongOptions {
@@ -56,19 +60,14 @@ defaultPingPongOptions = PingPongOptions {
 -- > withPingPongUnlifted options connection app = withRunInIO $ \run ->
 -- >     withPingPong options connection (run . app)
 withPingPong :: PingPongOptions -> Connection -> (Connection -> IO ()) -> IO ()
-withPingPong options connection app = void $ 
+withPingPong options connection app = void $
     withAsync (app connection) $ \appAsync -> do
         withAsync (pingThread connection (pingInterval options) (pingAction options)) $ \pingAsync -> do
-            withAsync (heartbeat >> throwIO PongTimeout) $ \heartbeatAsync -> do
+            withAsync (heartbeat >>= throwIO . PongTimeout) $ \heartbeatAsync -> do
                 waitAnyCancel [appAsync, pingAsync, heartbeatAsync]
     where
-        heartbeat = whileJust $ timeout (pongTimeout options * 1000 * 1000) 
-           $ takeMVar (connectionHeartbeat connection)
-
-        -- Loop until action returns Nothing
-        whileJust :: IO (Maybe a) -> IO ()
-        whileJust action = do
-            result <- action
-            case result of
-                Nothing -> return ()
-                Just _ -> whileJust action
+        heartbeat :: IO (Maybe BL.ByteString)
+        heartbeat = flip fix Nothing $ \loop lastResult ->
+           timeout (pongTimeout options * 1000 * 1000) (takeMVar (connectionHeartbeat connection)) >>= \case
+               Just result -> loop (Just result)
+               Nothing -> return lastResult
