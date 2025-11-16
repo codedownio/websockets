@@ -1,10 +1,14 @@
-resolver: nightly-2023-12-26
-save-hackage-creds: false
+resolver: nightly-2025-03-26
+compiler: ghc-9.12.2
+
+packages:
+- .
+
 flags:
   websockets:
     example: true
-extra-deps:
-- 'hakyll-4.15.1.0'
+
 nix:
-  packages:
-  - 'zlib'
+  enable: false
+
+system-ghc: true
