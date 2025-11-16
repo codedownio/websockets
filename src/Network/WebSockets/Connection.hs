@@ -302,7 +302,7 @@ receiveDataMessage conn = do
                 throwIO $ CloseRequest i closeMsg
             Pong body -> do
                 _ <- tryPutMVar (connectionHeartbeat conn) body
-                connectionOnPong (connectionOptions conn)
+                connectionOnPong (connectionOptions conn) body
                 receiveDataMessage conn
             Ping pl   -> do
                 send conn (ControlMessage (Pong pl))

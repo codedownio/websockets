@@ -14,6 +14,7 @@ module Network.WebSockets.Connection.Options
 
 
 --------------------------------------------------------------------------------
+import qualified Data.ByteString.Lazy     as BL
 import           Data.Int    (Int64)
 import           Data.Monoid (Monoid (..))
 import           Prelude
@@ -28,7 +29,7 @@ import           Prelude
 --
 -- This way your code does not break if the library introduces new fields.
 data ConnectionOptions = ConnectionOptions
-    { connectionOnPong                :: !(IO ())
+    { connectionOnPong                :: !(BL.ByteString -> IO ())
       -- ^ Whenever a 'pong' is received, this IO action is executed. It can be
       -- used to tickle connections or fire missiles.
     , connectionTimeout               :: !Int
@@ -64,7 +65,7 @@ data ConnectionOptions = ConnectionOptions
 -- * 30 second timeout for connection establishment.
 defaultConnectionOptions :: ConnectionOptions
 defaultConnectionOptions = ConnectionOptions
-    { connectionOnPong                = return ()
+    { connectionOnPong                = const $ return ()
     , connectionTimeout               = 30
     , connectionCompressionOptions    = NoCompression
     , connectionStrictUnicode         = False
