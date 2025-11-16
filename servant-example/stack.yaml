@@ -1,0 +1,11 @@
+resolver: nightly-2025-03-26
+compiler: ghc-9.12.2
+
+packages:
+- .
+- ../  # Reference to the parent websockets package
+
+system-ghc: true
+
+nix:
+  enable: false

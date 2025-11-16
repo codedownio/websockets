@@ -1,0 +1,24 @@
+name:                servant-example
+version:             0.1.0.0
+synopsis:            WebSocket ping-pong test using Warp + Servant
+license:             BSD3
+build-type:          Simple
+cabal-version:       >= 1.10
+
+executable websockets-pingpong-servant
+  main-is:             PingPongServant.hs
+  ghc-options:         -Wall -threaded -rtsopts
+  default-language:    Haskell2010
+
+  build-depends:
+    base              >= 4.14   && < 5,
+    async             >= 2.2    && < 2.3,
+    bytestring        >= 0.9    && < 0.13,
+    text              >= 0.10   && < 2.2,
+    unliftio,
+    unliftio-core,
+    warp              >= 3.3    && < 3.5,
+    servant           >= 0.19   && < 0.21,
+    servant-server    >= 0.19   && < 0.21,
+    servant-websockets >= 2.0   && < 2.1,
+    websockets        >= 0.13   && < 0.14
