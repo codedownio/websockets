@@ -31,7 +31,7 @@ instance Exception PongTimeout
 data PingPongOptions = PingPongOptions {
     pingInterval :: Int, -- ^ Interval in seconds
     pongTimeout :: Int, -- ^ Timeout in seconds
-    pingAction :: Int -> IO () -- ^ Action to perform after sending a ping
+    pingAction :: IO () -- ^ Action to perform after sending a ping
 }
 
 -- | Default options for ping-pong
@@ -41,7 +41,7 @@ defaultPingPongOptions :: PingPongOptions
 defaultPingPongOptions = PingPongOptions {
     pingInterval = 15,
     pongTimeout = 30,
-    pingAction = const $ return ()
+    pingAction = return ()
 }
 
 -- | Run an application with ping-pong enabled. Raises 'PongTimeout' if a pong

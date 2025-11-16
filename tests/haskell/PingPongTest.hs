@@ -25,7 +25,7 @@ wsHandler pending = do
   let pingPongOpts = WS.defaultPingPongOptions {
         WS.pingInterval = 30
         , WS.pongTimeout = 60
-        , WS.pingAction = \n -> putStrLn ("Server sent ping: " <> show n)
+        , WS.pingAction = putStrLn "Server sent ping"
         }
   WS.withPingPong pingPongOpts conn $ \_ -> do
     putStrLn "Server entering idle state with ping/pong enabled"

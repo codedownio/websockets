@@ -15,7 +15,7 @@ import Control.Monad.IO.Unlift
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import Network.Wai.Handler.Warp (defaultSettings, runSettings, setHost, setPort, setTimeout)
+import Network.Wai.Handler.Warp (defaultSettings, runSettings, setHost, setPort)
 import qualified Network.WebSockets as WS
 import Servant
 import Servant.API.WebSocket (WebSocket)
@@ -35,7 +35,7 @@ wsHandler conn = liftIO $ flip withException handler $ do
   putStrLn "Server sent: hello world"
 
   let pingPongOpts = WS.defaultPingPongOptions {
-        WS.pingAction = \n -> putStrLn ("Server sent ping: " <> show n)
+        WS.pingAction = putStrLn "Server sent ping"
         }
   WS.withPingPong pingPongOpts conn $ \_ -> do
     putStrLn "Server entering idle state with ping/pong enabled"
