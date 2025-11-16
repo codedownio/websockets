@@ -88,7 +88,7 @@ stays alive on some browsers.
 
 > application state pending = do
 >     conn <- WS.acceptRequest pending
->     WS.withPingThread conn 30 (return ()) $ do
+>     WS.withPingThread conn 30 (const $ return ()) $ do
 
 When a client is succesfully connected, we read the first message. This should
 be in the format of "Hi! I am Jasper", where Jasper is the requested username.

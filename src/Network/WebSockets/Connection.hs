@@ -415,7 +415,7 @@ sendPong conn = send conn . ControlMessage . Pong . toLazyByteString
 withPingThread
     :: Connection
     -> Int    -- ^ Second interval in which pings should be sent.
-    -> IO ()  -- ^ Repeat this after sending a ping.
+    -> (Int -> IO ())  -- ^ Repeat this after sending a ping.
     -> IO a   -- ^ Application to wrap with a ping thread.
     -> IO a   -- ^ Executes application and kills ping thread when done.
 withPingThread conn n action app =
@@ -432,7 +432,7 @@ withPingThread conn n action app =
 -- sending a ping every 30 seconds is a good idea.
 forkPingThread :: Connection -> Int -> IO ()
 forkPingThread conn n = do
-    _ <- forkIO $ pingThread conn n (return ())
+    _ <- forkIO $ pingThread conn n (const $ return ())
     return ()
 {-# DEPRECATED forkPingThread "Use 'withPingThread' instead" #-}
 
@@ -441,16 +441,16 @@ forkPingThread conn n = do
 -- | Use this if you want to run the ping thread yourself.
 --
 -- See also 'withPingThread'.
-pingThread :: Connection -> Int -> IO () -> IO ()
-pingThread conn n action
-    | n <= 0    = return ()
+pingThread :: Connection -> Int -> (Int -> IO ()) -> IO ()
+pingThread conn intervalUs action
+    | intervalUs <= 0 = return ()
     | otherwise = ignore `handle` go 1
   where
     go :: Int -> IO ()
     go i = do
-        threadDelay (n * 1000 * 1000)
+        threadDelay (intervalUs * 1000 * 1000)
         sendPing conn (T.pack $ show i)
-        action
+        action i
         go (i + 1)
 
     ignore e = case fromException e of
