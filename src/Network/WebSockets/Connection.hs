@@ -444,7 +444,7 @@ forkPingThread conn n = do
 pingThread :: Connection -> Int -> (Int -> IO ()) -> IO ()
 pingThread conn intervalUs action
     | intervalUs <= 0 = return ()
-    | otherwise = ignore `handle` go 1
+    | otherwise = go 1
   where
     go :: Int -> IO ()
     go i = do
@@ -452,7 +452,3 @@ pingThread conn intervalUs action
         sendPing conn (T.pack $ show i)
         action i
         go (i + 1)
-
-    ignore e = case fromException e of
-        Just async -> throwIO (async :: AsyncException)
-        Nothing    -> return ()
