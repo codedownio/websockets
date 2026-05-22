@@ -7,7 +7,7 @@ module Network.WebSockets.Server.Tests
 
 
 --------------------------------------------------------------------------------
-import           Control.Applicative            ((<$>), (<|>))
+import           Control.Applicative            ((<|>))
 import           Control.Concurrent             (forkIO, killThread,
                                                  threadDelay)
 import           Control.Concurrent.Async       (Async, async, cancel)
@@ -40,7 +40,7 @@ tests = testGroup "Network.WebSockets.Server.Tests"
     , testCase "bulk server/client"   testBulkServerClient
     , testCase "onPong"               testOnPong
     , testCase "ipv6 server"          testIpv6Server
-    , testCase "reject request"       testRejectRequest 
+    , testCase "reject request"       testRejectRequest
     ]
 
 

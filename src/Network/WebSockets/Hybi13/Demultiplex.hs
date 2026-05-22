@@ -20,7 +20,6 @@ import           Data.Binary.Get                       (getWord16be, runGet)
 import qualified Data.ByteString.Lazy                  as BL
 import           Data.Int                              (Int64)
 import           Data.Monoid                           (mappend)
-import           Data.Typeable                         (Typeable)
 import           Network.WebSockets.Connection.Options
 import           Network.WebSockets.Types
 
@@ -52,7 +51,7 @@ data FrameType
 --------------------------------------------------------------------------------
 -- | Thrown if the client sends invalid multiplexed data
 data DemultiplexException = DemultiplexException
-    deriving (Show, Typeable)
+    deriving (Show)
 
 
 --------------------------------------------------------------------------------

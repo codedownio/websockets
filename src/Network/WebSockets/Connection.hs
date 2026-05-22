@@ -45,7 +45,6 @@ module Network.WebSockets.Connection
 
 
 --------------------------------------------------------------------------------
-import           Control.Applicative                             ((<$>))
 import           Control.Concurrent                              (forkIO,
                                                                   threadDelay)
 import qualified Control.Concurrent.Async                        as Async

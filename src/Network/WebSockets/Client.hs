@@ -19,7 +19,7 @@ module Network.WebSockets.Client
 
 --------------------------------------------------------------------------------
 import qualified Data.ByteString.Builder       as Builder
-import           Control.Exception             (bracket, finally, throwIO)
+import           Control.Exception             (bracket, throwIO)
 import           Control.Concurrent.MVar       (newEmptyMVar)
 import           Control.Monad                 (void)
 import           Data.IORef                    (newIORef)

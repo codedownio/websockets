@@ -14,7 +14,6 @@ module Network.WebSockets.Extensions.PermessageDeflate
 
 
 --------------------------------------------------------------------------------
-import           Control.Applicative                       ((<$>))
 import           Control.Exception                         (throwIO)
 import           Control.Monad                             (foldM, unless)
 import qualified Data.ByteString                           as B

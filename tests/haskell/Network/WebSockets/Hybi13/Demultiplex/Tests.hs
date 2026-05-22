@@ -6,7 +6,6 @@ module Network.WebSockets.Hybi13.Demultiplex.Tests
 
 
 --------------------------------------------------------------------------------
-import           Control.Applicative                   ((<$>))
 import qualified Data.ByteString.Lazy                  as BL
 import           Network.WebSockets
 import           Network.WebSockets.Hybi13.Demultiplex

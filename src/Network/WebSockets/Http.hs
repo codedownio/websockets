@@ -33,8 +33,7 @@ module Network.WebSockets.Http
 --------------------------------------------------------------------------------
 import qualified Data.ByteString.Builder                   as Builder
 import qualified Data.ByteString.Builder.Extra             as Builder
-import           Control.Applicative                       (pure, (*>), (<$>),
-                                                            (<*), (<*>))
+import           Control.Applicative                       ((*>), (<*), (<*>))
 import           Control.Exception                         (Exception)
 import qualified Data.Attoparsec.ByteString                as A
 import           Data.ByteString                           (ByteString)
@@ -43,7 +42,6 @@ import           Data.ByteString.Char8                     ()
 import qualified Data.ByteString.Char8                     as BC
 import           Data.ByteString.Internal                  (c2w)
 import qualified Data.CaseInsensitive                      as CI
-import           Data.Dynamic                              (Typeable)
 import           Data.Monoid                               (mappend, mconcat)
 import qualified Network.WebSockets.Extensions.Description as Extensions
 

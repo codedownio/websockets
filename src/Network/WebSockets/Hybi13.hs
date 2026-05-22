@@ -18,7 +18,6 @@ module Network.WebSockets.Hybi13
 
 --------------------------------------------------------------------------------
 import qualified Data.ByteString.Builder               as B
-import           Control.Applicative                   (pure, (<$>))
 import           Control.Arrow                         (first)
 import           Control.Exception                     (throwIO)
 import           Control.Monad                         (forM, liftM, unless,
@@ -79,7 +78,7 @@ finishResponse request response = do
     --
     -- But we don't check it for now
     when (responseCode response == 400) $ Left $
-        RequestRejected request response 
+        RequestRejected request response
     when (responseCode response /= 101) $ Left $
         MalformedResponse response "Wrong response status or message."
 
