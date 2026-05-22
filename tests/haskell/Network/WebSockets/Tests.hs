@@ -8,7 +8,6 @@ module Network.WebSockets.Tests
 
 --------------------------------------------------------------------------------
 import qualified Data.ByteString.Builder               as Builder
-import           Control.Applicative                   ((<$>))
 import           Control.Concurrent                    (forkIO)
 import           Control.Exception                     (try)
 import           Control.Monad                         (replicateM)

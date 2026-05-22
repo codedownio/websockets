@@ -18,13 +18,12 @@ module Network.WebSockets.Util.PubSub
     , subscribe
     ) where
 
-import Control.Applicative ((<$>))
+import qualified Control.Concurrent.MVar as MV
 import Control.Exception (IOException, handle)
 import Control.Monad (foldM, forever)
 import Control.Monad.Trans (liftIO)
 import Data.IntMap (IntMap)
 import Data.List (foldl')
-import qualified Control.Concurrent.MVar as MV
 
 import qualified Data.IntMap as IM
 

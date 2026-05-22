@@ -26,7 +26,6 @@ import qualified Data.Text                as T
 import qualified Data.Text.Encoding.Error as TL
 import qualified Data.Text.Lazy           as TL
 import qualified Data.Text.Lazy.Encoding  as TL
-import           Data.Typeable            (Typeable)
 import           Data.Word                (Word16)
 import           System.IO.Unsafe         (unsafePerformIO)
 
@@ -160,7 +159,7 @@ data ConnectionException
     -- | The client sent invalid UTF-8.  Note that this exception will only be
     -- thrown if strict decoding is set in the connection options.
     | UnicodeException String
-    deriving (Eq, Show, Typeable)
+    deriving (Eq, Show)
 
 
 --------------------------------------------------------------------------------
