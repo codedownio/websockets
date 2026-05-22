@@ -43,6 +43,7 @@ import qualified Data.ByteString.Char8                     as BC
 import           Data.ByteString.Internal                  (c2w)
 import qualified Data.CaseInsensitive                      as CI
 import           Data.Monoid                               (mappend, mconcat)
+import           GHC.Stack
 import qualified Network.WebSockets.Extensions.Description as Extensions
 
 
@@ -103,8 +104,8 @@ data HandshakeException
     | ConnectionTimeout
     -- | for example "EOF came too early" (which is actually a parse error)
     -- or for your own errors. (like "unknown path"?)
-    | OtherHandshakeException String
-    deriving (Show, Typeable)
+    | OtherHandshakeException CallStack String
+    deriving (Show)
 
 
 --------------------------------------------------------------------------------
