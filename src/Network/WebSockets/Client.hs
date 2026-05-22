@@ -25,6 +25,7 @@ import           Control.Monad                 (void)
 import           Data.IORef                    (newIORef)
 import qualified Data.Text                     as T
 import qualified Data.Text.Encoding            as T
+import           GHC.Stack
 import qualified Network.Socket                as S
 import           System.Timeout                (timeout)
 
@@ -46,23 +47,27 @@ type ClientApp a = Connection -> IO a
 
 --------------------------------------------------------------------------------
 -- TODO: Maybe this should all be strings
-runClient :: String       -- ^ Host
-          -> Int          -- ^ Port
-          -> String       -- ^ Path
-          -> ClientApp a  -- ^ Client application
-          -> IO a
+runClient
+  :: HasCallStack
+  => String       -- ^ Host
+  -> Int          -- ^ Port
+  -> String       -- ^ Path
+  -> ClientApp a  -- ^ Client application
+  -> IO a
 runClient host port path ws =
     runClientWith host port path defaultConnectionOptions [] ws
 
 
 --------------------------------------------------------------------------------
-runClientWith :: String             -- ^ Host
-              -> Int                -- ^ Port
-              -> String             -- ^ Path
-              -> ConnectionOptions  -- ^ Options
-              -> Headers            -- ^ Custom headers to send
-              -> ClientApp a        -- ^ Client application
-              -> IO a
+runClientWith
+  :: HasCallStack
+  => String             -- ^ Host
+  -> Int                -- ^ Port
+  -> String             -- ^ Path
+  -> ConnectionOptions  -- ^ Options
+  -> Headers            -- ^ Custom headers to send
+  -> ClientApp a        -- ^ Client application
+  -> IO a
 runClientWith host port path0 opts customHeaders app = do
     -- Create and connect socket
     let hints = S.defaultHints
@@ -90,7 +95,8 @@ runClientWith host port path0 opts customHeaders app = do
 --------------------------------------------------------------------------------
 
 runClientWithStream
-    :: Stream
+    :: HasCallStack
+    => Stream
     -- ^ Stream
     -> String
     -- ^ Host
@@ -113,7 +119,8 @@ runClientWithStream stream host path opts customHeaders app = do
 -- channel. 'runClientWithStream' handles this for you, prefer to use it when
 -- possible.
 newClientConnection
-    :: Stream
+    :: HasCallStack
+    => Stream
     -- ^ Stream that will be used by the new 'Connection'.
     -> String
     -- ^ Host
@@ -137,14 +144,12 @@ newClientConnection stream host path opts customHeaders = do
 
 -- | Check the response from the server.
 -- Throws 'OtherHandshakeException' on failure
-checkServerResponse :: Stream -> RequestHead -> IO ()
+checkServerResponse :: HasCallStack => Stream -> RequestHead -> IO ()
 checkServerResponse stream request = do
     mbResponse <- Stream.parse stream decodeResponseHead
     response   <- case mbResponse of
         Just response -> return response
-        Nothing       -> throwIO $ OtherHandshakeException $
-            "Network.WebSockets.Client.newClientConnection: no handshake " ++
-            "response from server"
+        Nothing       -> throwIO $ OtherHandshakeException callStack $ "Network.WebSockets.Client.newClientConnection: no handshake response from server"
     void $ either throwIO return $ finishResponse protocol request response
   where
     protocol = defaultProtocol -- TODO
@@ -176,15 +181,16 @@ streamToClientConnection stream opts = do
 
 
 --------------------------------------------------------------------------------
-runClientWithSocket :: S.Socket           -- ^ Socket
-                    -> String             -- ^ Host
-                    -> String             -- ^ Path
-                    -> ConnectionOptions  -- ^ Options
-                    -> Headers            -- ^ Custom headers to send
-                    -> ClientApp a        -- ^ Client application
-                    -> IO a
+runClientWithSocket
+  :: HasCallStack
+  => S.Socket           -- ^ Socket
+  -> String             -- ^ Host
+  -> String             -- ^ Path
+  -> ConnectionOptions  -- ^ Options
+  -> Headers            -- ^ Custom headers to send
+  -> ClientApp a        -- ^ Client application
+  -> IO a
 runClientWithSocket sock host path opts customHeaders app = bracket
     (Stream.makeSocketStream sock)
     Stream.close
-    (\stream ->
-        runClientWithStream stream host path opts customHeaders app)
+    (\stream -> runClientWithStream stream host path opts customHeaders app)
