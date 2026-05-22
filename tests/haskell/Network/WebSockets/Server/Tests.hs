@@ -111,7 +111,7 @@ testOnPong :: Assertion
 testOnPong = withEchoServer "127.0.0.1" 42941 "Bye" $ do
     gotPong <- newIORef False
     let opts = defaultConnectionOptions
-                   { connectionOnPong = writeIORef gotPong True
+                   { connectionOnPong = \_ -> writeIORef gotPong True
                    }
 
     rcv <- runClientWith "127.0.0.1" 42941 "/" opts [] client
