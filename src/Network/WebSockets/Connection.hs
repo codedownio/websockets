@@ -48,7 +48,7 @@ module Network.WebSockets.Connection
 import           Control.Concurrent                              (forkIO,
                                                                   threadDelay)
 import qualified Control.Concurrent.Async                        as Async
-import           Control.Concurrent.MVar                         (MVar, newEmptyMVar, tryPutMVar)
+import           Control.Concurrent.MVar                         (MVar, newEmptyMVar, newMVar, tryPutMVar, withMVar)
 import           Control.Exception                               (AsyncException,
                                                                   fromException,
                                                                   handle,
@@ -180,6 +180,7 @@ acceptRequestWith pc ar = case find (flip compatible request) protocols of
         parse <- foldM (\x ext -> extParse ext x) parseRaw exts
 
         sentRef <- newIORef False
+        sendLock <- newMVar ()
         heartbeat <- newEmptyMVar
         let connection = Connection
                 { connectionOptions   = options
@@ -189,6 +190,7 @@ acceptRequestWith pc ar = case find (flip compatible request) protocols of
                 , connectionWrite     = write
                 , connectionHeartbeat = heartbeat
                 , connectionSentClose = sentRef
+                , connectionSendLock  = sendLock
                 }
 
         pendingOnAccept pc connection
@@ -261,11 +263,17 @@ data Connection = Connection
     , connectionParse     :: !(IO (Maybe Message))
     , connectionWrite     :: !([Message] -> IO ())
     , connectionSentClose :: !(IORef Bool)
-    -- ^ According to the RFC, both the client and the server MUST send
-    -- a close control message to each other.  Either party can initiate
-    -- the first close message but then the other party must respond.  Finally,
-    -- the server is in charge of closing the TCP connection.  This IORef tracks
-    -- if we have sent a close message and are waiting for the peer to respond.
+    -- ^ According to the RFC, both the client and the server MUST send a close
+    -- control message to each other. Either party can initiate the first close
+    -- message but then the other party must respond. Finally, the server is in
+    -- charge of closing the TCP connection. This IORef tracks if we have sent a
+    -- close message and are waiting for the peer to respond.
+    , connectionSendLock  :: !(MVar ())
+    -- ^ Serializes 'sendAll' so that the 'connectionSentClose' check and the
+    -- underlying write happen atomically. Without this, two threads writing to
+    -- the same connection (e.g. a proxy forwarding data while another thread
+    -- sends the close reply) could pass the sent-close check and then have
+    -- their writes reordered, emitting a data frame after the close frame.
     }
 
 
@@ -281,12 +289,12 @@ receive conn = do
 --------------------------------------------------------------------------------
 -- | Receive an application message. Automatically respond to control messages.
 --
--- When the peer sends a close control message, an exception of type 'CloseRequest'
--- is thrown.  The peer can send a close control message either to initiate a
--- close or in response to a close message we have sent to the peer.  In either
--- case the 'CloseRequest' exception will be thrown.  The RFC specifies that
--- the server is responsible for closing the TCP connection, which should happen
--- after receiving the 'CloseRequest' exception from this function.
+-- When the peer sends a close control message, an exception of type
+-- 'CloseRequest' is thrown. The peer can send a close control message either to
+-- initiate a close or in response to a close message we have sent to the peer.
+-- In either case the 'CloseRequest' exception will be thrown. The RFC specifies
+-- that the server is responsible for closing the TCP connection, which should
+-- happen after receiving the 'CloseRequest' exception from this function.
 --
 -- This will throw 'ConnectionClosed' if the TCP connection dies unexpectedly.
 receiveDataMessage :: Connection -> IO DataMessage
@@ -319,15 +327,25 @@ send :: Connection -> Message -> IO ()
 send conn = sendAll conn . return
 
 --------------------------------------------------------------------------------
+
 sendAll :: Connection -> [Message] -> IO ()
 sendAll _    []   = return ()
-sendAll conn msgs = do
-    when (any isCloseMessage msgs) $
-      writeIORef (connectionSentClose conn) True
-    connectionWrite conn msgs
+sendAll conn msgs =
+    withMVar (connectionSendLock conn) $ \() -> do
+        alreadySentClose <- readIORef (connectionSentClose conn)
+        case alreadySentClose of
+            True ->
+                when (any isDataMessage msgs) $ throwIO ConnectionSentClose
+            False -> do
+                when (any isCloseMessage msgs) $
+                    writeIORef (connectionSentClose conn) True
+                connectionWrite conn msgs
   where
     isCloseMessage (ControlMessage (Close _ _)) = True
     isCloseMessage _                            = False
+
+    isDataMessage (DataMessage {}) = True
+    isDataMessage _                = False
 
 --------------------------------------------------------------------------------
 -- | Send a 'DataMessage'.  This allows you send both human-readable text and

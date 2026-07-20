@@ -153,6 +153,12 @@ data ConnectionException
     -- control messages.
     | ConnectionClosed
 
+    -- | An attempt was made to send a message after a close control message
+    -- had already been sent on this connection.  The RFC forbids sending any
+    -- further frames once a close has been sent, so we refuse the write rather
+    -- than emit a frame the peer will reject.
+    | ConnectionSentClose
+
     -- | The client sent garbage, i.e. we could not parse the WebSockets stream.
     | ParseException String
 
