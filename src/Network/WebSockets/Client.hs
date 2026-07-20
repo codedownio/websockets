@@ -20,7 +20,7 @@ module Network.WebSockets.Client
 --------------------------------------------------------------------------------
 import qualified Data.ByteString.Builder       as Builder
 import           Control.Exception             (bracket, throwIO)
-import           Control.Concurrent.MVar       (newEmptyMVar)
+import           Control.Concurrent.MVar       (newEmptyMVar, newMVar)
 import           Control.Monad                 (void)
 import           Data.IORef                    (newIORef)
 import qualified Data.Text                     as T
@@ -166,6 +166,7 @@ streamToClientConnection stream opts = do
                 (connectionMessageDataSizeLimit opts) stream
     write   <- encodeMessages protocol ClientConnection stream
     sentRef <- newIORef False
+    sendLock <- newMVar ()
     heartbeat <- newEmptyMVar
     return $ Connection
         { connectionOptions   = opts
@@ -175,6 +176,7 @@ streamToClientConnection stream opts = do
         , connectionWrite     = write
         , connectionHeartbeat = heartbeat
         , connectionSentClose = sentRef
+        , connectionSendLock  = sendLock
         }
   where
     protocol = defaultProtocol
